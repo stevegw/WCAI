@@ -220,6 +220,11 @@
         config = loader.parseYaml(yamlStr);
         if (prefix) applyPrefix(prefix);
         saveToStorage();
+        // Auto-download the prefixed YAML so the user has a copy
+        if (prefix) {
+          var filename = prefix.toLowerCase() + '_acme_config.yaml';
+          downloadFile(filename, loader.toYaml(config), 'text/yaml');
+        }
         goToStep(0);
       })
       .catch(function () {

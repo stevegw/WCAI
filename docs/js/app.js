@@ -513,16 +513,87 @@
   // ============================================================
   // Step 8: Generate
   // ============================================================
+  // File descriptions for the generate step
+  var FILE_INFO = {
+    'oir_config.xml': {
+      title: 'Object Initialization Rules (OIR)',
+      desc: 'Binds each of the 4 change object types (Problem Report, Change Request, Change Notice, Change Activity) to their lifecycle template, workflow, and team template. When a user creates a new change object in Windchill, the OIR determines which lifecycle and workflow it follows.',
+      how: 'Loaded via <code>windchill wt.load.LoadFromFile</code> into your OrgContainer. This is an XML file that Windchill\'s LoadFromFile utility reads directly.',
+      auto: true,
+    },
+    'business_rules.xml': {
+      title: 'Business Rules (Pre-Release Validation)',
+      desc: 'Defines the CHANGEABLE_PRE_RELEASE rule set with two rules: (1) a checkout rule that prevents releasing objects that are checked out, and (2) a release target rule that validates the state transition is valid. These rules run automatically when someone attempts to release a change notice.',
+      how: 'Loaded via <code>windchill wt.load.LoadFromFile</code>. Creates the rule set, individual rules, and links that bind rules to the set.',
+      auto: true,
+    },
+    'team_config.txt': {
+      title: 'Team Template & Context Team Reference',
+      desc: 'A human-readable reference document (not machine-loaded) that maps your groups to roles across all 4 team templates. Use this as a guide when manually populating team templates and context teams in the Windchill UI. It shows exactly which groups go into which roles.',
+      how: 'Not deployed automatically. Open this file and follow it step-by-step when editing team templates in the Windchill UI (Site > Templates > Team Templates).',
+      auto: false,
+    },
+    'deploy_preferences.bat': {
+      title: 'Change Management Preferences Script',
+      desc: 'Sets all 8 change management preferences (CN without CR, auto CN creation, sequenced plan, cardinalities, optional review, info propagation, affected end items) at your configured context level. Each preference is set via the Windchill PrefCmd utility and optionally locked to prevent lower-context overrides.',
+      how: 'Run from a Windchill shell. Called automatically by <code>deploy_all.bat</code>, or run standalone: <code>deploy_preferences.bat</code>. Each preference maps to a specific Windchill preference node and key.',
+      auto: true,
+    },
+    'association_rules_spec.txt': {
+      title: 'Association Rules Reference',
+      desc: 'Documents which change object associations your process uses (PR->CR, CR->CN, CN->Activity, and optionally PR->CN) with their cardinality and enabled/disabled status. Association rules control which change objects can be linked together -- for example, whether a Problem Report can be associated with a Change Request.',
+      how: 'Not deployed automatically. Association rules must be configured manually in the Windchill UI: navigate to your Org > Utilities > Business Rules > Change Association Rules. Disable all OOB rules first, then create only the ones listed in this file.',
+      auto: false,
+    },
+    'deploy_all.bat': {
+      title: 'Master Deployment Orchestrator',
+      desc: 'Runs all automated deployments in sequence across 5 phases: (1) load OIR XML, (2) load business rules XML, (3) run preference commands, (4) remind about manual association rules, (5) validate OIR bindings. Supports <code>--dry-run</code> to preview without making changes. Logs all output to a timestamped file.',
+      how: 'Copy all generated files to the Windchill server. Open a Windchill shell, cd to the folder, and run: <code>deploy_all.bat --dry-run</code> first, then <code>deploy_all.bat</code> for real. Requires Site/Org Admin privileges.',
+      auto: true,
+    },
+  };
+
   function renderGenerate() {
-    document.getElementById("main").innerHTML =
-      '<h1 class="sec-title">Generate Deployment Artifacts</h1>' +
-      '<p class="sec-desc">Generate all Windchill deployment files from your config. Files are downloaded to your browser -- no server needed.</p>' +
-      '<div style="text-align:center; padding: 40px 0;">' +
-        '<button class="btn btn-primary" onclick="WCAI.app.doGenerate()" style="padding:14px 32px;font-size:15px;">' +
-          'Generate All Files' +
-        '</button>' +
-      '</div>' +
-      navButtons();
+    var org = esc(config.company.org || 'YourOrg');
+
+    var html = '<h1 class="sec-title">Generate Deployment Artifacts</h1>' +
+      '<p class="sec-desc">Generate all Windchill deployment files from your config. Files are downloaded to your browser -- no server needed.</p>';
+
+    // Explain what gets generated before the button
+    html += '<div style="margin-bottom:24px;">';
+    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:rgba(34,197,94,0.2);">' +
+      '<div class="toggle-info">' +
+        '<div class="name" style="color:#22c55e;">Automated (loaded via Windchill CLI)</div>' +
+        '<div class="desc">These files are loaded into Windchill using command-line tools from a Windchill shell. The deploy_all.bat script handles all three.</div>' +
+      '</div></div>';
+
+    html += '<div style="padding:0 8px;font-size:12px;color:#94a3b8;margin-bottom:16px;">' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">oir_config.xml</strong> -- ' + FILE_INFO['oir_config.xml'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">business_rules.xml</strong> -- ' + FILE_INFO['business_rules.xml'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">deploy_preferences.bat</strong> -- ' + FILE_INFO['deploy_preferences.bat'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">deploy_all.bat</strong> -- ' + FILE_INFO['deploy_all.bat'].desc + '</p>' +
+    '</div>';
+
+    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:rgba(245,158,11,0.2);">' +
+      '<div class="toggle-info">' +
+        '<div class="name" style="color:#f59e0b;">Reference (manual steps in Windchill UI)</div>' +
+        '<div class="desc">These are human-readable guides for steps that cannot be automated. Follow them when configuring teams and association rules in the Windchill web interface.</div>' +
+      '</div></div>';
+
+    html += '<div style="padding:0 8px;font-size:12px;color:#94a3b8;margin-bottom:16px;">' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">team_config.txt</strong> -- ' + FILE_INFO['team_config.txt'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">association_rules_spec.txt</strong> -- ' + FILE_INFO['association_rules_spec.txt'].desc + '</p>' +
+    '</div>';
+    html += '</div>';
+
+    html += '<div style="text-align:center; padding: 20px 0 10px;">' +
+      '<button class="btn btn-primary" onclick="WCAI.app.doGenerate()" style="padding:14px 32px;font-size:15px;">' +
+        'Generate All Files' +
+      '</button>' +
+    '</div>' +
+    navButtons();
+
+    document.getElementById("main").innerHTML = html;
   }
 
   function doGenerate() {
@@ -547,23 +618,42 @@
 
       for (var i = 0; i < generatedFiles.length; i++) {
         var f = generatedFiles[i];
-        html += '<div class="file-item">' +
-          '<span class="file-name">' + esc(f.name) + '</span>' +
-          '<div class="file-actions">' +
-            '<span class="file-size">' + f.content.length.toLocaleString() + ' bytes</span>' +
-            '<button class="btn-download" onclick="WCAI.app.downloadSingleFile(' + i + ')">Download</button>' +
-          '</div></div>';
+        var info = FILE_INFO[f.name];
+        var autoTag = info && info.auto
+          ? '<span class="cl-badge done" style="margin-left:0;margin-right:6px;">CLI</span>'
+          : '<span class="cl-badge todo" style="margin-left:0;margin-right:6px;">Reference</span>';
+
+        html += '<div class="card" style="margin-bottom:8px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+            '<div style="display:flex;align-items:center;">' +
+              autoTag +
+              '<span class="file-name">' + esc(f.name) + '</span>' +
+            '</div>' +
+            '<div class="file-actions">' +
+              '<span class="file-size">' + f.content.length.toLocaleString() + ' bytes</span>' +
+              '<button class="btn-download" onclick="WCAI.app.downloadSingleFile(' + i + ')">Download</button>' +
+            '</div>' +
+          '</div>';
+
+        if (info) {
+          html += '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">' +
+            '<p style="margin-bottom:4px;">' + info.desc + '</p>' +
+            '<p style="color:#64748b;"><strong>How to use:</strong> ' + info.how + '</p>' +
+          '</div>';
+        }
+        html += '</div>';
       }
 
       html += '</div>' +
         '<div class="success-box" style="margin-top:16px;">' +
-          '<h3>Next Steps</h3>' +
-          '<p>1. Copy the generated files to your Windchill server</p>' +
-          '<p>2. Open your Windchill shell on the server</p>' +
-          '<p>3. <code>cd [path-to-generated-folder]</code></p>' +
-          '<p>4. <code>deploy_all.bat --dry-run</code> (preview)</p>' +
-          '<p>5. <code>deploy_all.bat</code> (deploy for real)</p>' +
-          '<p style="margin-top:10px">6. Then continue to the <strong>Deploy Checklist</strong> for manual steps:</p>' +
+          '<h3>Deployment Steps</h3>' +
+          '<p>1. Download the ZIP and extract it on your Windchill server</p>' +
+          '<p>2. Open a Windchill shell: <code>cd %WT_HOME% && bin\\adminTools\\windchill shell</code></p>' +
+          '<p>3. Navigate to the extracted folder: <code>cd [path-to-files]</code></p>' +
+          '<p>4. Preview first: <code>deploy_all.bat --dry-run</code></p>' +
+          '<p>5. Deploy for real: <code>deploy_all.bat</code></p>' +
+          '<p style="margin-top:8px;color:#64748b;">The .bat files only work inside a Windchill shell (not a regular command prompt). The Windchill shell sets up the Java classpath and environment needed by the <code>windchill</code> CLI commands.</p>' +
+          '<p style="margin-top:10px">6. After deployment, open the <strong>Deploy Checklist</strong> for the manual steps (teams, association rules, access control, testing):</p>' +
         '</div>' +
         '<div style="text-align:center; margin-top:16px;">' +
           '<button class="btn btn-primary" onclick="WCAI.app.goToStep(' + (STEPS.length - 1) + ')" style="padding:12px 28px;">' +

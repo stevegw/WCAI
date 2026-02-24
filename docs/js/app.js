@@ -94,7 +94,27 @@
     model = m.getModelMetadata();
 
     if (!loadFromStorage()) {
-      config = loader.getDefaultConfig();
+      // First visit -- try to load the user's saved config from the server
+      fetch('configs/company_config.yaml')
+        .then(function (res) {
+          if (!res.ok) throw new Error('not found');
+          return res.text();
+        })
+        .then(function (yamlStr) {
+          config = loader.parseYaml(yamlStr);
+          saveToStorage();
+          renderNav();
+          goToStep(0);
+        })
+        .catch(function () {
+          // No saved config found -- start with blank default
+          config = loader.getDefaultConfig();
+          renderNav();
+          goToStep(0);
+        });
+      loadChecklistFromStorage();
+      renderNav();
+      return; // async -- will render when fetch completes
     }
     loadChecklistFromStorage();
     currentStep = loadStepFromStorage();

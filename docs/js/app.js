@@ -100,20 +100,19 @@
       renderNav();
       renderWelcome();
 
-      // Try to load a saved config in the background
-      fetch('configs/company_config.yaml')
-        .then(function (res) {
-          if (!res.ok) throw new Error('not found');
-          return res.text();
-        })
-        .then(function (yamlStr) {
-          config = loader.parseYaml(yamlStr);
-          saveToStorage();
-          // Stay on welcome -- user can navigate when ready
-        })
-        .catch(function () {
-          // No saved config found -- keep blank default
-        });
+      // Try to load a saved config in the background (only works on http/https, not file://)
+      if (location.protocol !== 'file:') {
+        fetch('configs/company_config.yaml')
+          .then(function (res) {
+            if (!res.ok) throw new Error('not found');
+            return res.text();
+          })
+          .then(function (yamlStr) {
+            config = loader.parseYaml(yamlStr);
+            saveToStorage();
+          })
+          .catch(function () { /* no saved config -- keep blank default */ });
+      }
       return;
     }
     loadChecklistFromStorage();
@@ -201,6 +200,51 @@
   // ============================================================
   // Load Example Config
   // ============================================================
+  var EXAMPLE_CONFIG = {
+    company: {
+      name: "Acme Engineering", org: "AcmeOrg", site: "acme-wc-prod",
+      context_level: "organization", lock_preferences: true, use_flexible_change: true
+    },
+    groups: [
+      { id: "eng", name: "Engineering", description: "Product engineering and design team" },
+      { id: "mfg", name: "Manufacturing", description: "Manufacturing engineering and production" },
+      { id: "qa", name: "Quality Assurance", description: "Quality and compliance team" },
+      { id: "mgmt", name: "Management", description: "Engineering and program management" }
+    ],
+    people: [
+      { id: "jsmith", name: "Jane Smith", username: "jsmith", email: "jsmith@acme.com", group: "eng" },
+      { id: "bwilson", name: "Bob Wilson", username: "bwilson", email: "bwilson@acme.com", group: "eng" },
+      { id: "mchen", name: "Maria Chen", username: "mchen", email: "mchen@acme.com", group: "mfg" },
+      { id: "dkim", name: "David Kim", username: "dkim", email: "dkim@acme.com", group: "qa" },
+      { id: "tpatel", name: "Tanya Patel", username: "tpatel", email: "tpatel@acme.com", group: "mgmt" },
+      { id: "rjones", name: "Robert Jones", username: "rjones", email: "rjones@acme.com", group: "mgmt" }
+    ],
+    roles: {
+      change_admin_1: ["eng"], change_admin_2: ["mgmt"], change_admin_3: ["mgmt"],
+      change_impl: ["eng", "mfg"], change_review_board: ["mgmt", "qa"],
+      pr_author: ["eng", "mfg", "qa"], cr_author: ["eng", "mgmt"],
+      assignee: ["eng", "mfg"], reviewer: ["qa"]
+    },
+    preferences: {
+      cn_without_cr: "No", auto_cn_creation: "No", sequenced_plan: "Yes",
+      cr_to_cn_cardinality: "No", cr_to_pr_cardinality: "No",
+      optional_review: "No", info_propagation: "Yes", affected_end_items: "Yes"
+    },
+    associations: {
+      pr_to_cr: { enabled: true, cardinality: "many:1" },
+      cr_to_cn: { enabled: true, cardinality: "many:1" },
+      cn_to_task: { enabled: true, cardinality: "1:many" },
+      pr_to_cn: { enabled: false, cardinality: "many:1" }
+    },
+    business_rules: {
+      rule_set_name: "ACME_PRE_RELEASE",
+      rules: [
+        { key: "ACME_CHECKOUT_RULE", selector: "CHECKOUT_RULE", description: "Fails if changeable is checked out", block_number: 1 },
+        { key: "ACME_RELEASE_TARGET_RULE", selector: "RELEASE_TARGET_RULE", description: "Validates change transition from source to destination state", block_number: 10 }
+      ]
+    }
+  };
+
   function loadExample() {
     var prefix = prompt(
       'Enter a short prefix (e.g. XPR) to make this example unique.\n' +
@@ -211,25 +255,17 @@
     if (prefix === null) return; // user cancelled
     prefix = prefix.trim().toUpperCase();
 
-    fetch('configs/acme_engineering.yaml')
-      .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.text();
-      })
-      .then(function (yamlStr) {
-        config = loader.parseYaml(yamlStr);
-        if (prefix) applyPrefix(prefix);
-        saveToStorage();
-        // Auto-download the prefixed YAML so the user has a copy
-        if (prefix) {
-          var filename = prefix.toLowerCase() + '_acme_config.yaml';
-          downloadFile(filename, loader.toYaml(config), 'text/yaml');
-        }
-        goToStep(0);
-      })
-      .catch(function () {
-        alert('Could not load example file automatically.\n\nIf you opened index.html directly from disk, use the "Upload YAML Config" button instead and select:\n  docs/configs/acme_engineering.yaml');
-      });
+    // Deep-copy the embedded example so each load is independent
+    config = JSON.parse(JSON.stringify(EXAMPLE_CONFIG));
+    config = loader.normalize(config);
+    if (prefix) applyPrefix(prefix);
+    saveToStorage();
+    // Auto-download the prefixed YAML so the user has a copy
+    if (prefix) {
+      var filename = prefix.toLowerCase() + '_acme_config.yaml';
+      downloadFile(filename, loader.toYaml(config), 'text/yaml');
+    }
+    goToStep(0);
   }
 
   function applyPrefix(pfx) {

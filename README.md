@@ -1,6 +1,6 @@
-# Windchill Change Management — Configuration-as-Code
+# WCAI -- Windchill Config AI
 
-Define your company's Windchill change management setup **once** in YAML, then auto-generate all deployment artifacts.
+Define your company's Windchill setup **once** in YAML, then auto-generate all deployment artifacts.
 
 ## The Problem
 

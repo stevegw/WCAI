@@ -2,7 +2,7 @@
 Windchill Config -- Interactive Wizard
 ======================================
 A step-by-step terminal wizard that walks users through defining
-their company's Windchill change management configuration.
+their company's Windchill configuration.
 
 Produces a complete config dict that can be saved to YAML.
 """
@@ -157,12 +157,12 @@ def ask_multi_choice(prompt: str, options: list[tuple[str, str]],
 def banner():
     print("""
 ============================================================
-  WINDCHILL CHANGE MANAGEMENT
-  Configuration-as-Code Wizard
+  WCAI -- WINDCHILL CONFIG AI
+  Configuration Wizard
 ============================================================
 
   This wizard will walk you through defining your company's
-  Windchill change management configuration. Your answers will
+  Windchill configuration. Your answers will
   be saved as a YAML file that can be version-controlled and
   used to generate all deployment artifacts.
 

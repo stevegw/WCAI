@@ -251,7 +251,7 @@ windchill wt.pref.PrefCmd set \\
 
     return f"""#!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# Windchill Change Management Preferences
+# WCAI -- Windchill Config AI -- Preferences
 # Company:   {name}
 # Org:       {org}
 # Context:   {ctx}
@@ -328,7 +328,7 @@ def generate_deploy_script(config: dict) -> str:
     return f"""#!/bin/bash
 # ═══════════════════════════════════════════════════════════════════
 # MASTER DEPLOYMENT SCRIPT
-# Windchill Change Management — Configuration-as-Code
+# WCAI -- Windchill Config AI
 # ═══════════════════════════════════════════════════════════════════
 # Company: {name}
 # Org:     {org}

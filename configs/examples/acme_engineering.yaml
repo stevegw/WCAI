@@ -1,8 +1,8 @@
 # ═══════════════════════════════════════════════════════════════════
-# Windchill Change Management — Company Configuration Model
+# WCAI -- Windchill Config AI -- Company Configuration
 # ═══════════════════════════════════════════════════════════════════
 # This YAML file is the single source of truth for your company's
-# Windchill change management setup. Define it once, version-control
+# Windchill setup. Define it once, version-control
 # it, and use the CLI tool to generate all deployment artifacts.
 #
 # Run:  python -m wc_config.cli wizard        (interactive setup)
@@ -77,8 +77,9 @@ people:
     group: mgmt
 
 # ─── Role Assignments ───────────────────────────────────────────
-# Maps Windchill change management roles to your people.
-# Multiple people can share a role; one person can hold many roles.
+# Maps Windchill change management roles to your GROUPS.
+# Best practice: Users -> Groups -> Roles
+# Never assign individual users directly to roles in templates.
 #
 # Available roles:
 #   change_admin_1    - Manages PRs and CR analysis
@@ -92,31 +93,29 @@ people:
 #   reviewer          - Reviews change notice task deliverables
 roles:
   change_admin_1:
-    - jsmith
+    - eng
   change_admin_2:
-    - tpatel
+    - mgmt
   change_admin_3:
-    - rjones
+    - mgmt
   change_impl:
-    - bwilson
-    - mchen
+    - eng
+    - mfg
   change_review_board:
-    - tpatel
-    - rjones
-    - dkim
+    - mgmt
+    - qa
   pr_author:
-    - jsmith
-    - bwilson
-    - mchen
-    - dkim
+    - eng
+    - mfg
+    - qa
   cr_author:
-    - jsmith
-    - tpatel
+    - eng
+    - mgmt
   assignee:
-    - bwilson
-    - mchen
+    - eng
+    - mfg
   reviewer:
-    - dkim
+    - qa
 
 # ─── Change Management Preferences ──────────────────────────────
 # These map directly to Windchill Preference Management settings.

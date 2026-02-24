@@ -124,6 +124,8 @@ def _validate_roles(config: dict) -> list[Issue]:
     issues = []
     roles = config.get("roles", {})
     people_index = config.get("_people_index", {})
+    group_ids = {g["id"] for g in config.get("groups", [])}
+    valid_ids = set(people_index.keys()) | group_ids
 
     # Check critical roles have assignments
     critical_roles = ["change_admin_1", "change_admin_2", "change_admin_3"]
@@ -133,11 +135,11 @@ def _validate_roles(config: dict) -> list[Issue]:
             role_def = ROLES.get(role_id)
             issues.append(Issue(
                 Severity.WARNING, "roles",
-                f"Critical role '{role_def.display_name}' has no one assigned",
-                f"Assign at least one person to roles.{role_id}"
+                f"Critical role '{role_def.display_name}' has no group assigned",
+                f"Assign at least one group to roles.{role_id}"
             ))
 
-    # Check all assignments reference real people
+    # Check all assignments reference real groups or people
     for role_id, assigned_ids in roles.items():
         if role_id not in ROLES:
             issues.append(Issue(
@@ -147,22 +149,21 @@ def _validate_roles(config: dict) -> list[Issue]:
             ))
             continue
 
-        for person_id in assigned_ids:
-            if person_id not in people_index:
+        for ref_id in assigned_ids:
+            if ref_id not in valid_ids:
                 issues.append(Issue(
                     Severity.ERROR, "roles",
-                    f"Role '{role_id}' references person '{person_id}' who doesn't exist",
-                    "Add this person to the 'people' section or fix the ID"
+                    f"Role '{role_id}' references '{ref_id}' which is not a known group or person",
+                    "Add this as a group in the 'groups' section or as a person in the 'people' section"
                 ))
 
     # Check for role conflicts
-    ca2_cr = set(roles.get("change_admin_2", []))
-    ca2_cn = set(roles.get("change_admin_2", []))
-    if ca2_cr and len(ca2_cr) == 1:
+    ca2_groups = set(roles.get("change_admin_2", []))
+    if ca2_groups and len(ca2_groups) == 1:
         issues.append(Issue(
             Severity.INFO, "roles",
-            "Change Admin II is the same person for both CR and CN workflows. "
-            "If you need different people, consider overriding team templates "
+            "Change Admin II has a single group for both CR and CN workflows. "
+            "If you need different groups per workflow, consider overriding team templates "
             "at the sub-organizational level instead of using context teams.",
         ))
 

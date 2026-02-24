@@ -1,8 +1,8 @@
 # ═══════════════════════════════════════════════════════════════════
-# Windchill Change Management — Company Configuration Model
+# WCAI -- Windchill Config AI -- Company Configuration
 # ═══════════════════════════════════════════════════════════════════
 # This YAML file is the single source of truth for your company's
-# Windchill change management setup. Define it once, version-control
+# Windchill setup. Define it once, version-control
 # it, and use the CLI tool to generate all deployment artifacts.
 #
 # Run:  python -m wc_config.cli wizard        (interactive setup)

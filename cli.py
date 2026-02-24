@@ -29,7 +29,7 @@ from .wizard import run_wizard
 def main():
     parser = argparse.ArgumentParser(
         prog="wc-config",
-        description="Windchill Change Management — Configuration-as-Code",
+        description="WCAI -- Windchill Config AI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

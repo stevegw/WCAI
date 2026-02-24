@@ -27,18 +27,15 @@ def generate_all(config: dict, output_dir: str | Path) -> list[Path]:
         ("oir_config.xml", generate_oir),
         ("business_rules.xml", generate_business_rules),
         ("team_config.txt", generate_team_config),
-        ("deploy_preferences.sh", generate_preferences_script),
+        ("deploy_preferences.bat", generate_preferences_script),
         ("association_rules_spec.txt", generate_association_spec),
-        ("deploy_all.sh", generate_deploy_script),
+        ("deploy_all.bat", generate_deploy_script),
     ]
 
     for filename, gen_func in generators:
         content = gen_func(config)
         filepath = output_dir / filename
         filepath.write_text(content)
-        # Make shell scripts executable
-        if filename.endswith(".sh"):
-            filepath.chmod(0o755)
         files.append(filepath)
 
     return files
@@ -85,10 +82,8 @@ def generate_oir(config: dict) -> str:
   Org:       {org}
   Generated: {timestamp}
   ===============================================================
-  Deploy with:
-    windchill wt.load.LoadFromFile \\
-      -d oir_config.xml \\
-      -CONT_PATH /wt.inf.container.OrgContainer={org}
+  Deploy from Windchill shell:
+    windchill wt.load.LoadFromFile -d oir_config.xml -CONT_PATH /wt.inf.container.OrgContainer={org}
   ===============================================================
 -->
 <!DOCTYPE ObjectInitializationRules SYSTEM "standardX20.dtd">
@@ -142,10 +137,8 @@ def generate_business_rules(config: dict) -> str:
   Org:       {org}
   Generated: {timestamp}
   ===============================================================
-  Deploy order matters:
-    1. windchill wt.load.LoadFromFile -d business_rules.xml
-  The rules, set, and links are all in this single file.
-  LoadFromFile processes them in document order.
+  Deploy from Windchill shell:
+    windchill wt.load.LoadFromFile -d business_rules.xml
   ===============================================================
 -->
 <!DOCTYPE BusinessRule SYSTEM "standardX20.dtd">
@@ -239,44 +232,44 @@ def generate_preferences_script(config: dict) -> str:
     pref_commands = []
     for pref_key, pref_def in PREFERENCES.items():
         value = prefs.get(pref_key, pref_def.default)
-        pref_commands.append(f"""# {pref_def.description}
-echo "  Setting: {pref_def.display_name} = {value}"
-windchill wt.pref.PrefCmd set \\
-  -contextPath "${{CONTEXT_PATH}}" \\
-  -prefNode "{pref_def.wc_pref_node}" \\
-  -prefKey "{pref_def.wc_pref_key}" \\
-  -value "{value}" \\
-  -locked {lock}
+        pref_commands.append(f"""REM {pref_def.description}
+echo   Setting: {pref_def.display_name} = {value}
+windchill wt.pref.PrefCmd set -contextPath "%CONTEXT_PATH%" -prefNode "{pref_def.wc_pref_node}" -prefKey "{pref_def.wc_pref_key}" -value "{value}" -locked {lock}
+if errorlevel 1 echo   [WARNING] Failed to set {pref_def.display_name}
 """)
 
-    return f"""#!/bin/bash
-# ===============================================================
-# Windchill Change Management Preferences
-# Company:   {name}
-# Org:       {org}
-# Context:   {ctx}
-# Locked:    {lock}
-# Generated: {timestamp}
-# ===============================================================
-# PREREQUISITE: source $WT_HOME/bin/adminTools/windchillenv.sh
-# ===============================================================
+    return f"""@echo off
+REM ===============================================================
+REM WCAI -- Windchill Config AI -- Preferences
+REM Company:   {name}
+REM Org:       {org}
+REM Context:   {ctx}
+REM Locked:    {lock}
+REM Generated: {timestamp}
+REM ===============================================================
+REM Run from Windchill shell:
+REM   cd %WT_HOME%
+REM   bin\\adminTools\\windchill shell
+REM   deploy_preferences.bat
+REM ===============================================================
 
-set -euo pipefail
+echo.
+echo ============================================
+echo   Change Preferences Deployment
+echo   {name}
+echo ============================================
+echo.
 
-echo ""
-echo "+==================================================+"
-echo "|  Change Preferences Deployment                   |"
-echo "|  {name:<47s}|"
-echo "+==================================================+"
-echo ""
-
-WT_HOME="${{WT_HOME:-/opt/ptc/Windchill}}"
-CONTEXT_PATH="/wt.inf.container.OrgContainer={org}"
+if "%WT_HOME%"=="" set WT_HOME=C:\\ptc\\Windchill
+set CONTEXT_PATH=/wt.inf.container.OrgContainer={org}
 
 {chr(10).join(pref_commands)}
 
-echo ""
-echo "[ok] All preferences deployed. Context: {ctx}/{org}, Locked: {lock}"
+echo.
+echo [ok] All preferences deployed.
+echo   Context: {ctx}/{org}
+echo   Locked: {lock}
+echo.
 """
 
 
@@ -325,126 +318,142 @@ def generate_deploy_script(config: dict) -> str:
     org = company["org"]
     timestamp = datetime.now().isoformat()
 
-    return f"""#!/bin/bash
-# ===================================================================
-# MASTER DEPLOYMENT SCRIPT
-# Windchill Change Management -- Configuration-as-Code
-# ===================================================================
-# Company: {name}
-# Org:     {org}
-# Generated: {timestamp}
-#
-# PREREQUISITES:
-#   1. Windchill server is running
-#   2. source $WT_HOME/bin/adminTools/windchillenv.sh
-#   3. Deploying user has Site/Org Admin privileges
-#   4. All generated files are in the same directory
-#
-# USAGE:
-#   cd /path/to/generated-output/
-#   source $WT_HOME/bin/adminTools/windchillenv.sh
-#   bash deploy_all.sh [--dry-run]
-# ===================================================================
+    return f"""@echo off
+REM ===================================================================
+REM MASTER DEPLOYMENT SCRIPT
+REM WCAI -- Windchill Config AI
+REM ===================================================================
+REM Company: {name}
+REM Org:     {org}
+REM Generated: {timestamp}
+REM
+REM PREREQUISITES:
+REM   1. Windchill server is running
+REM   2. Open Windchill shell:  cd %WT_HOME% && bin\\adminTools\\windchill shell
+REM   3. Deploying user has Site/Org Admin privileges
+REM   4. All generated files are in the same directory
+REM
+REM USAGE:
+REM   cd [path-to-generated-files]
+REM   deploy_all.bat              (full deployment)
+REM   deploy_all.bat --dry-run    (preview only)
+REM ===================================================================
 
-set -euo pipefail
+setlocal enabledelayedexpansion
 
-DRY_RUN=false
-[[ "${{1:-}}" == "--dry-run" ]] && DRY_RUN=true
+set DRY_RUN=0
+if "%~1"=="--dry-run" set DRY_RUN=1
 
-WT_HOME="${{WT_HOME:-/opt/ptc/Windchill}}"
-CONTEXT_PATH="/wt.inf.container.OrgContainer={org}"
-DEPLOY_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_FILE="${{DEPLOY_DIR}}/deploy_$(date +%Y%m%d_%H%M%S).log"
+if "%WT_HOME%"=="" set WT_HOME=C:\\ptc\\Windchill
+set CONTEXT_PATH=/wt.inf.container.OrgContainer={org}
+set DEPLOY_DIR=%~dp0
+set LOG_FILE=%DEPLOY_DIR%deploy_%date:~-4%%date:~4,2%%date:~7,2%.log
 
-log() {{ echo "[$(date '+%H:%M:%S')] $1" | tee -a "${{LOG_FILE}}"; }}
+echo.
+echo ============================================================
+echo   WINDCHILL CONFIGURATION-AS-CODE DEPLOYMENT
+echo   {name}
+echo ============================================================
+echo   Phase 1: Object Initialization Rules (LoadFromFile)
+echo   Phase 2: Business Rules (LoadFromFile)
+echo   Phase 3: Change Preferences (PrefCmd)
+echo   Phase 4: Association Rules (manual verification)
+echo   Phase 5: Validation
+echo ============================================================
+echo.
 
-echo ""
-echo "+===========================================================+"
-echo "|  WINDCHILL CONFIGURATION-AS-CODE DEPLOYMENT               |"
-echo "|  {name:<55s}|"
-echo "+===========================================================+"
-echo "|  Phase 1: Object Initialization Rules (LoadFromFile)      |"
-echo "|  Phase 2: Business Rules (LoadFromFile)                   |"
-echo "|  Phase 3: Change Preferences (PrefCmd)                    |"
-echo "|  Phase 4: Association Rules (manual verification)         |"
-echo "|  Phase 5: Validation                                      |"
-echo "+===========================================================+"
-echo ""
+if %DRY_RUN%==1 (
+    echo [DRY RUN MODE -- no changes will be made]
+    echo.
+)
 
-if $DRY_RUN; then
-  log "DRY RUN MODE -- no changes will be made"
-  echo ""
-fi
+REM --- PHASE 1: Object Initialization Rules ---------------------
+echo === PHASE 1: Object Initialization Rules ===
+echo === PHASE 1: Object Initialization Rules === >> "%LOG_FILE%"
+if exist "%DEPLOY_DIR%oir_config.xml" (
+    if %DRY_RUN%==1 (
+        echo [dry] Would load oir_config.xml into %CONTEXT_PATH%
+    ) else (
+        echo Loading oir_config.xml...
+        windchill wt.load.LoadFromFile -d "%DEPLOY_DIR%oir_config.xml" -CONT_PATH "%CONTEXT_PATH%" >> "%LOG_FILE%" 2>&1
+        if errorlevel 1 (
+            echo [FAIL] OIR load failed - check %LOG_FILE%
+        ) else (
+            echo [ok] OIR loaded successfully
+        )
+    )
+) else (
+    echo [!] oir_config.xml not found -- skipping
+)
+echo.
 
-# --- PHASE 1: Object Initialization Rules ---------------------
-log "=== PHASE 1: Object Initialization Rules ==="
-if [ -f "${{DEPLOY_DIR}}/oir_config.xml" ]; then
-  if $DRY_RUN; then
-    log "[dry] Would load oir_config.xml into ${{CONTEXT_PATH}}"
-  else
-    windchill wt.load.LoadFromFile \\
-      -d "${{DEPLOY_DIR}}/oir_config.xml" \\
-      -CONT_PATH "${{CONTEXT_PATH}}" \\
-      2>&1 | tee -a "${{LOG_FILE}}"
-  fi
-  log "[ok] OIR complete"
-else
-  log "[!] oir_config.xml not found -- skipping"
-fi
+REM --- PHASE 2: Business Rules ----------------------------------
+echo === PHASE 2: Business Rules ===
+echo === PHASE 2: Business Rules === >> "%LOG_FILE%"
+if exist "%DEPLOY_DIR%business_rules.xml" (
+    if %DRY_RUN%==1 (
+        echo [dry] Would load business_rules.xml into %CONTEXT_PATH%
+    ) else (
+        echo Loading business_rules.xml...
+        windchill wt.load.LoadFromFile -d "%DEPLOY_DIR%business_rules.xml" -CONT_PATH "%CONTEXT_PATH%" >> "%LOG_FILE%" 2>&1
+        if errorlevel 1 (
+            echo [FAIL] Business rules load failed - check %LOG_FILE%
+        ) else (
+            echo [ok] Business rules loaded successfully
+        )
+    )
+) else (
+    echo [!] business_rules.xml not found -- skipping
+)
+echo.
 
-# --- PHASE 2: Business Rules ----------------------------------
-log "=== PHASE 2: Business Rules ==="
-if [ -f "${{DEPLOY_DIR}}/business_rules.xml" ]; then
-  if $DRY_RUN; then
-    log "[dry] Would load business_rules.xml into ${{CONTEXT_PATH}}"
-  else
-    windchill wt.load.LoadFromFile \\
-      -d "${{DEPLOY_DIR}}/business_rules.xml" \\
-      -CONT_PATH "${{CONTEXT_PATH}}" \\
-      2>&1 | tee -a "${{LOG_FILE}}"
-  fi
-  log "[ok] Business rules complete"
-else
-  log "[!] business_rules.xml not found -- skipping"
-fi
+REM --- PHASE 3: Preferences ------------------------------------
+echo === PHASE 3: Change Preferences ===
+echo === PHASE 3: Change Preferences === >> "%LOG_FILE%"
+if exist "%DEPLOY_DIR%deploy_preferences.bat" (
+    if %DRY_RUN%==1 (
+        echo [dry] Would execute deploy_preferences.bat
+    ) else (
+        call "%DEPLOY_DIR%deploy_preferences.bat" >> "%LOG_FILE%" 2>&1
+        echo [ok] Preferences set
+    )
+) else (
+    echo [!] deploy_preferences.bat not found -- skipping
+)
+echo.
 
-# --- PHASE 3: Preferences -------------------------------------
-log "=== PHASE 3: Change Preferences ==="
-if [ -f "${{DEPLOY_DIR}}/deploy_preferences.sh" ]; then
-  if $DRY_RUN; then
-    log "[dry] Would execute deploy_preferences.sh"
-  else
-    bash "${{DEPLOY_DIR}}/deploy_preferences.sh" 2>&1 | tee -a "${{LOG_FILE}}"
-  fi
-  log "[ok] Preferences complete"
-else
-  log "[!] deploy_preferences.sh not found -- skipping"
-fi
+REM --- PHASE 4: Association Rules -------------------------------
+echo === PHASE 4: Association Rules ===
+echo Association rules require manual configuration.
+echo Review: association_rules_spec.txt
+echo Navigate in Windchill: Site/Org -> Utilities -> Business Rules
+echo.
 
-# --- PHASE 4: Association Rules --------------------------------
-log "=== PHASE 4: Association Rules ==="
-log "Association rules require manual configuration or REST API."
-log "Review: association_rules_spec.txt"
-log "Navigate: Site/Org -> Utilities -> Business Rules"
+REM --- PHASE 5: Validation --------------------------------------
+echo === PHASE 5: Post-Deployment Validation ===
+if %DRY_RUN%==0 (
+    echo Checking OIR bindings...
+    windchill wt.load.LoadFromFile -d "%DEPLOY_DIR%oir_config.xml" -CHECK >> "%LOG_FILE%" 2>&1
+    if errorlevel 1 (
+        echo [!] OIR check reported issues - review %LOG_FILE%
+    ) else (
+        echo [ok] OIR validation passed
+    )
+)
 
-# --- PHASE 5: Validation --------------------------------------
-log "=== PHASE 5: Post-Deployment Validation ==="
-if ! $DRY_RUN; then
-  log "Checking OIR..."
-  windchill wt.load.LoadFromFile \\
-    -d "${{DEPLOY_DIR}}/oir_config.xml" -CHECK 2>&1 | tee -a "${{LOG_FILE}}" || true
-fi
+echo.
+echo ============================================================
+echo   DEPLOYMENT COMPLETE
+echo   Log: %LOG_FILE%
+echo ============================================================
+echo   REMAINING MANUAL STEPS:
+echo   1. Create/verify team templates in Windchill UI
+echo   2. Assign context team members per Product/Library
+echo   3. Configure association rules via Utilities page
+echo   4. Verify access control policies per role
+echo   5. Test: Create PR -> CR -> CN -> Task end-to-end
+echo ============================================================
+echo.
 
-echo ""
-echo "+===========================================================+"
-echo "|  DEPLOYMENT COMPLETE                                      |"
-echo "|  Log: ${{LOG_FILE}}                                       |"
-echo "+===========================================================+"
-echo "|  REMAINING MANUAL STEPS:                                  |"
-echo "|  1. Create/verify team templates in Windchill UI          |"
-echo "|  2. Assign context team members per Product/Library       |"
-echo "|  3. Configure association rules via Utilities page        |"
-echo "|  4. Verify access control policies per role               |"
-echo "|  5. Test: Create PR -> CR -> CN -> Task end-to-end          |"
-echo "+===========================================================+"
+endlocal
 """

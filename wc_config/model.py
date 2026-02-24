@@ -1,5 +1,5 @@
 """
-Windchill Change Management -- Core Data Model & Constants
+WCAI -- Core Data Model & Constants
 =========================================================
 Defines the canonical Windchill change objects, roles, preferences,
 and their relationships. This is the 'schema' that the YAML config

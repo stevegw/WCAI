@@ -1,2 +1,2 @@
-"""Windchill Change Management -- Configuration-as-Code."""
+"""WCAI -- Windchill Config AI."""
 __version__ = "0.1.0"

@@ -29,7 +29,7 @@ from .wizard import run_wizard
 def main():
     parser = argparse.ArgumentParser(
         prog="wc-config",
-        description="Windchill Change Management -- Configuration-as-Code",
+        description="WCAI -- Windchill Config AI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -144,11 +144,10 @@ def cmd_generate(args):
         size = f.stat().st_size
         print(f"  {'[ok]':>5s} {f.name:<35s} {size:>6,d} bytes")
     print(f"{'=' * 60}")
-    print(f"\n  Deploy with:")
+    print(f"\n  Deploy with (from Windchill shell):")
     print(f"    cd {output_dir.resolve()}")
-    print(f"    source $WT_HOME/bin/adminTools/windchillenv.sh")
-    print(f"    bash deploy_all.sh          # full deployment")
-    print(f"    bash deploy_all.sh --dry-run # preview only")
+    print(f"    deploy_all.bat              REM full deployment")
+    print(f"    deploy_all.bat --dry-run    REM preview only")
     print()
 
 

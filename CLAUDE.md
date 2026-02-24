@@ -105,38 +105,47 @@ Windchill ships with **4 out-of-the-box team templates** at Site level, already 
 This sequence was validated through actual implementation and corrects several common mistakes:
 
 ```
-Step 1: Verify Organization Exists
+Step 1:  Verify Organization Exists
          Site -> Utilities -> Organization Administration
 
-Step 2: Verify User Accounts Exist
+Step 2:  Assign Organization Administrators
+         Browse -> Organizations -> [Org] -> Administrators -> Add Users
+         NOTE: Initially NO org admin is defined. Required before Steps 5, 9, 10.
+
+Step 3:  Verify User Accounts Exist
          Site -> Utilities -> Participant Administration
 
-Step 3: Create Groups and Add Users to Groups
+Step 4:  Verify License Group Membership
+         Site -> Utilities -> License Management
+         Users not in a license group CANNOT access Windchill at all.
+         Change management users need PTC Author or PTC PDMLink license.
+
+Step 5:  Create Groups and Add Users to Groups
          [Org] -> Utilities -> Participant Administration -> Internal Groups -> Create
          [Org] -> Utilities -> Participant Administration -> Internal Groups -> [Group] -> Add Members
          NOTE: Groups cannot be created via LoadFromFile. Manual step only.
 
-Step 4: Add Groups to OOTB Team Template Roles
+Step 6:  Add Groups to OOTB Team Template Roles
          Site -> Templates -> Team Templates -> [template name] -> Edit
          Populate each role in each of the 4 templates with your groups.
 
-Step 5: Configure Context Teams (per Product/Library)
+Step 7:  Configure Context Teams (per Product/Library)
          [Product/Library] -> Team -> Edit Team -> [Role] -> Add Group
          Override template defaults where Products differ.
 
-Step 6: Run Automated Deployment (deploy_all.bat)
+Step 8:  Run Automated Deployment (deploy_all.bat)
          OIR via windchill wt.load.LoadFromFile
          Business Rules via windchill wt.load.LoadFromFile
          Preferences via windchill wt.pref.PrefCmd
 
-Step 7: Configure Association Rules
+Step 9:  Configure Association Rules
          [Org] -> Utilities -> Business Rules -> Change Association Rules
          Disable ALL OOB rules first, then create only what you need.
 
-Step 8: Verify Access Control Policies
+Step 10: Verify Access Control Policies
          [Org] -> Utilities -> Policy Administration -> Access Control
 
-Step 9: End-to-End Test
+Step 11: End-to-End Test
          PR Author creates PR -> Change Admin I creates CR -> CRB reviews ->
          Change Admin II creates CN -> Assignees complete tasks -> Reviewers verify ->
          Change Admin II audits and releases

@@ -948,8 +948,30 @@
       html += clItem('org_exists', 'Verify organization \'' + org + '\' exists', 'Navigate to Site level and confirm your org is listed. If missing, create it now.', 'Site &rarr; Utilities &rarr; Organization Administration');
       html += endSection();
 
-      // === STEP 2: Verify Users ===
-      html += beginSection('s2', 2, 'Verify User Accounts Exist', 'Users must exist before they can join groups or teams', 'manual');
+      // === STEP 2: Assign Organization Administrators ===
+      html += beginSection('s2', 2, 'Assign Organization Administrators', 'PREREQUISITE: Required before creating groups, association rules, or access policies', 'manual');
+      html += bp('Why do you need Organization Administrators?',
+        '<p>Initially, <strong>no organization administrator is defined</strong> for a new organization context. Without one, only Site Administrators can perform org-level tasks.</p>' +
+        '<p>Organization Administrators can:</p>' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+          '<li>Create and manage <strong>user-defined groups</strong> within the organization</li>' +
+          '<li>Configure <strong>change association rules</strong> (only Site and Org Admins can do this)</li>' +
+          '<li>Manage <strong>access control policies</strong> at the organization level</li>' +
+          '<li>Manage organization templates (lifecycle, workflow, team templates)</li>' +
+          '<li>Control who can create Products and Libraries within the organization</li>' +
+        '</ul>' +
+        '<p>The person performing Steps 4, 9, and 10 of this checklist must have Org Admin privileges.</p>'
+      );
+      html += clItem('orgadmin_assign', 'Assign at least one Organization Administrator for \'' + org + '\'',
+        'Add the Windchill administrator user(s) who will perform the remaining setup steps. This user must already exist at the Site level.',
+        'Browse &rarr; Organizations &rarr; ' + org + ' &rarr; Administrators &rarr; Add Users to Administrators Group');
+      html += clItem('orgadmin_verify', 'Verify Org Admin can access org-level Utilities',
+        'Sign in as the assigned Org Admin and confirm you can see Participant Administration, Business Rules, and Policy Administration under the org context.',
+        org + ' &rarr; Utilities');
+      html += endSection();
+
+      // === STEP 3: Verify Users ===
+      html += beginSection('s3', 3, 'Verify User Accounts Exist', 'Users must exist before they can join groups or teams', 'manual');
       html += bp('Where do Windchill users come from?',
         '<p><strong>LDAP/Active Directory sync</strong> &mdash; Most common in enterprise environments. Users are managed in AD and synced automatically.</p>' +
         '<p><strong>Manual creation</strong> &mdash; For smaller or dev/test environments via Participant Administration.</p>'
@@ -960,8 +982,37 @@
       });
       html += endSection();
 
-      // === STEP 3: Create Groups ===
-      html += beginSection('s3', 3, 'Create Groups and Add Users', 'Create Windchill groups, add users. Groups are assigned to roles.', 'manual');
+      // === STEP 4: Verify License Group Membership ===
+      html += beginSection('s4', 4, 'Verify License Group Membership', 'Users must be in a license group or they cannot access Windchill', 'manual');
+      html += bp('Why are license groups critical?',
+        '<p><strong>If a user is not a member of any license group, access to Windchill is denied.</strong> This is a hard gate -- users cannot log in or perform actions without license group membership.</p>' +
+        '<p>Windchill uses a three-tier licensing system:</p>' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+          '<li><strong>License Profiles</strong> &mdash; Maintained by PTC, cannot be altered. Define which actions a license allows.</li>' +
+          '<li><strong>License Groups</strong> &mdash; Groups of users entitled to licenses. Administrators add users here.</li>' +
+          '<li><strong>License Names</strong> &mdash; Your purchased license keys (Named User or Active Daily User).</li>' +
+        '</ul>' +
+        '<p>For change management, users typically need one of:</p>' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+          '<li><strong>PTC Author</strong> &mdash; Full authoring including change management actions</li>' +
+          '<li><strong>PTC PDMLink Module</strong> &mdash; Core PDM module that includes change management</li>' +
+          '<li><strong>PTC Contributor</strong> &mdash; Limited capabilities (may not cover all change actions)</li>' +
+        '</ul>' +
+        '<p><strong>PTC View and Print Only</strong> users cannot create change objects.</p>'
+      );
+      html += clItem('license_review', 'Review available license groups',
+        'Check which license groups are available and how many seats remain. Common groups: PTC Author, PTC PDMLink, PTC Contributor.',
+        'Site &rarr; Utilities &rarr; License Management');
+      people.forEach(function (p, i) {
+        var id = 'license_user_' + i;
+        html += clItem(id, 'Verify license for: ' + esc(p.name || p.username) + ' (' + esc(p.username) + ')',
+          'Ensure this user is in an appropriate license group (PTC Author or PTC PDMLink) for change management actions.',
+          'Site &rarr; Utilities &rarr; Participant Administration &rarr; Search \'' + esc(p.username) + '\' &rarr; Groups tab');
+      });
+      html += endSection();
+
+      // === STEP 5: Create Groups ===
+      html += beginSection('s5', 5, 'Create Groups and Add Users', 'Create Windchill groups, add users. Groups are assigned to roles.', 'manual');
       html += bp('Best Practice: Why groups instead of individual users?',
         '<p>The Windchill best practice pattern is:</p>' +
         '<p style="text-align:center;font-size:14px;font-weight:700;color:#22c55e;padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
@@ -984,8 +1035,8 @@
       }
       html += endSection();
 
-      // === STEP 4: Add Groups to OOTB Team Template Roles ===
-      html += beginSection('s4', 4, 'Add Groups to OOTB Team Template Roles', 'Populate the existing Site-level team templates with your groups', 'manual');
+      // === STEP 6: Add Groups to OOTB Team Template Roles ===
+      html += beginSection('s6', 6, 'Add Groups to OOTB Team Template Roles', 'Populate the existing Site-level team templates with your groups', 'manual');
       html += bp('Understanding Team Templates',
         '<p>Windchill ships with <strong>4 out-of-the-box team templates</strong> at the Site level. They are already bound to change objects through OIRs and already contain the correct role definitions:</p>' +
         '<p style="font-size:12px;color:#94a3b8;padding:4px 0 8px;">Problem Report Team &bull; Change Request Team &bull; Change Notice Team &bull; Change Activity Team</p>' +
@@ -1009,8 +1060,8 @@
       });
       html += endSection();
 
-      // === STEP 5: Context Teams ===
-      html += beginSection('s5', 5, 'Configure Context Teams (per Product/Library)', 'PREFERRED: Override team template assignments at each Product/Library', 'manual');
+      // === STEP 7: Context Teams ===
+      html += beginSection('s7', 7, 'Configure Context Teams (per Product/Library)', 'PREFERRED: Override team template assignments at each Product/Library', 'manual');
       html += bp('Best Practice: Context Teams vs. Custom Team Templates',
         '<p>After populating the OOTB team templates (Step 4), you can further customize participant assignments per Product or Library using <strong>context teams</strong>.</p>' +
         '<div class="bp-comparison">' +
@@ -1071,8 +1122,8 @@
       html += '</div></div>';
       html += endSection();
 
-      // === STEP 6: Automated Deployment ===
-      html += beginSection('s6', 6, 'Run Automated Deployment', 'Loads OIR, business rules, and preferences', 'auto');
+      // === STEP 8: Automated Deployment ===
+      html += beginSection('s8', 8, 'Run Automated Deployment', 'Loads OIR, business rules, and preferences', 'auto');
       html += bp('What does deploy_all.bat actually do?',
         '<p><strong>Object Initialization Rules (OIR)</strong> &mdash; Binds each change object to its lifecycle, workflow, and team template.</p>' +
         '<p><strong>Business Rules</strong> &mdash; CHANGEABLE_PRE_RELEASE validates objects before release (not checked out, valid release targets).</p>' +
@@ -1091,8 +1142,8 @@
       });
       html += endSection();
 
-      // === STEP 7: Association Rules ===
-      html += beginSection('s7', 7, 'Configure Association Rules', 'Disable OOB rules and create yours', 'manual');
+      // === STEP 9: Association Rules ===
+      html += beginSection('s9', 9, 'Configure Association Rules', 'Disable OOB rules and create yours', 'manual');
       html += bp('Best Practice: Why disable the out-of-the-box rules?',
         '<div class="bp-quote"><p>In most cases, PTC recommends customers to disable the out-of-the-box rules and define the rules they want for their change process.</p>' +
         '<div class="bp-source">&mdash; PTC Windchill Change Implementation Training Guide</div></div>' +
@@ -1106,8 +1157,8 @@
       if (ac.pr_to_cn && ac.pr_to_cn.enabled) { html += clItem('assoc_pr_cn', 'Create: Problem Report &rarr; Change Notice (non-standard)', 'Type: Change Process, Cardinality: ' + (ac.pr_to_cn.cardinality || 'many:1'), org + ' &rarr; Utilities &rarr; Business Rules &rarr; New Change Association Rule'); }
       html += endSection();
 
-      // === STEP 8: Access Control ===
-      html += beginSection('s8', 8, 'Verify Access Control Policies', 'Ensure lifecycle states have correct permissions per role', 'manual');
+      // === STEP 10: Access Control ===
+      html += beginSection('s10', 10, 'Verify Access Control Policies', 'Ensure lifecycle states have correct permissions per role', 'manual');
       html += bp('What do access control policies affect?',
         '<p>Access control policies determine who can read, modify, or delete objects at each lifecycle state. Pay attention to Change Admin roles having modify access where they act.</p>' +
         '<p>The OOTB policies are generally reasonable, but verify they align with your process.</p>'
@@ -1122,8 +1173,8 @@
       });
       html += endSection();
 
-      // === STEP 9: End-to-End Test ===
-      html += beginSection('s9', 9, 'End-to-End Test', 'Verify the complete change process works', 'manual');
+      // === STEP 11: End-to-End Test ===
+      html += beginSection('s11', 11, 'End-to-End Test', 'Verify the complete change process works', 'manual');
       html += bp('How to approach testing',
         '<p>PTC recommends an <strong>iterative approach</strong>. Sign in as different users to test each role:</p>' +
         '<p><strong>PR Author</strong> creates PR &rarr; <strong>Change Admin I</strong> analyzes, creates CR &rarr; <strong>CRB</strong> reviews &rarr; <strong>Change Admin II</strong> creates CN &rarr; <strong>Assignees</strong> complete tasks &rarr; <strong>Reviewers</strong> verify &rarr; <strong>Change Admin II</strong> releases.</p>' +

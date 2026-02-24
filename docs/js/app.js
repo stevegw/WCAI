@@ -202,7 +202,15 @@
   // Load Example Config
   // ============================================================
   function loadExample() {
-    // Try fetching from configs/ (works on GitHub Pages and local server)
+    var prefix = prompt(
+      'Enter a short prefix (e.g. XPR) to make this example unique.\n' +
+      'This lets you load the example multiple times with different names.\n\n' +
+      'Leave blank for no prefix.',
+      ''
+    );
+    if (prefix === null) return; // user cancelled
+    prefix = prefix.trim().toUpperCase();
+
     fetch('configs/acme_engineering.yaml')
       .then(function (res) {
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -210,13 +218,57 @@
       })
       .then(function (yamlStr) {
         config = loader.parseYaml(yamlStr);
+        if (prefix) applyPrefix(prefix);
         saveToStorage();
         goToStep(0);
       })
       .catch(function () {
-        // Fallback for file:// protocol where fetch doesn't work
         alert('Could not load example file automatically.\n\nIf you opened index.html directly from disk, use the "Upload YAML Config" button instead and select:\n  docs/configs/acme_engineering.yaml');
       });
+  }
+
+  function applyPrefix(pfx) {
+    var lo = pfx.toLowerCase();
+
+    // Company
+    config.company.name = pfx + ' ' + config.company.name;
+    config.company.org = pfx + config.company.org;
+    config.company.site = lo + '-' + config.company.site;
+
+    // Groups -- prefix IDs and names, build old->new ID map
+    var groupMap = {};
+    (config.groups || []).forEach(function (g) {
+      var newId = lo + '_' + g.id;
+      groupMap[g.id] = newId;
+      g.id = newId;
+      g.name = pfx + ' ' + g.name;
+    });
+
+    // People -- update group references
+    (config.people || []).forEach(function (p) {
+      if (p.group && groupMap[p.group]) {
+        p.group = groupMap[p.group];
+      }
+    });
+
+    // Roles -- update group ID references
+    var newRoles = {};
+    for (var roleId in config.roles) {
+      newRoles[roleId] = (config.roles[roleId] || []).map(function (gid) {
+        return groupMap[gid] || gid;
+      });
+    }
+    config.roles = newRoles;
+
+    // Business rules
+    if (config.business_rules) {
+      if (config.business_rules.rule_set_name) {
+        config.business_rules.rule_set_name = pfx + '_' + config.business_rules.rule_set_name;
+      }
+      (config.business_rules.rules || []).forEach(function (r) {
+        if (r.key) r.key = pfx + '_' + r.key;
+      });
+    }
   }
 
   // ============================================================

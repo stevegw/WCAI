@@ -14,6 +14,10 @@
       <h2>WCAI</h2>
       <p>Windchill Config AI</p>
     </div>
+    <div class="sb-tabs" id="wizard-tabs">
+      <button class="sb-tab active" onclick="WCAI.app.switchWizard('teams')">Teams</button>
+      <button class="sb-tab" onclick="WCAI.app.switchWizard('change')">Change Mgmt</button>
+    </div>
     <ul class="sb-nav" id="nav"></ul>
     <div class="sb-status">
       <p>Progress</p>
@@ -38,11 +42,14 @@
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
-<!-- WCAI Modules (order matters: model -> loader -> validators -> generators -> app) -->
+<!-- WCAI Modules (order matters) -->
 <script src="js/model.js"></script>
 <script src="js/loader.js"></script>
 <script src="js/validators.js"></script>
 <script src="js/generators.js"></script>
+<script src="js/teams-model.js"></script>
+<script src="js/teams-validators.js"></script>
+<script src="js/teams-app.js"></script>
 <script src="js/app.js"></script>
 
 <!-- Boot -->

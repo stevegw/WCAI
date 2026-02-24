@@ -19,6 +19,12 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .sb-logo { padding: 0 20px 20px; border-bottom: 1px solid #334155; margin-bottom: 16px; }
 .sb-logo h2 { font-size: 15px; font-weight: 700; color: #f1f5f9; }
 .sb-logo p { font-size: 11px; color: #64748b; margin-top: 2px; }
+/* Sidebar tab switcher */
+.sb-tabs { display: flex; gap: 4px; padding: 0 12px 12px; margin-bottom: 4px; }
+.sb-tab { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; border: 1px solid #334155; background: transparent; color: #64748b; transition: all 0.15s; text-align: center; }
+.sb-tab:hover { border-color: #475569; color: #94a3b8; }
+.sb-tab.active { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #22c55e; }
+
 .sb-nav { list-style: none; }
 .sb-nav li { padding: 10px 20px; font-size: 13px; cursor: pointer; border-left: 3px solid transparent; color: #94a3b8; transition: all 0.15s; display: flex; align-items: center; gap: 10px; }
 .sb-nav li:hover { background: #1a2744; color: #e2e8f0; }

@@ -25,10 +25,22 @@
   var openSections = {}; // which checklist sections are expanded
   var generatedFiles = null; // cached after generate
 
+  // Teams & Participants wizard state
+  var currentWizard = "teams"; // "teams" | "change"
+  var teamsConfig = null;
+  var teamsStep = 0;
+  var teamsChecklistState = {};
+  var teamsOpenSections = {};
+
   var STORAGE_KEY_CONFIG = "wcai_config";
   var STORAGE_KEY_CHECKLIST = "wcai_checklist";
   var STORAGE_KEY_SECTIONS = "wcai_open_sections";
   var STORAGE_KEY_STEP = "wcai_step";
+  var STORAGE_KEY_WIZARD = "wcai_wizard";
+  var STORAGE_KEY_TEAMS_CONFIG = "wcai_teams_config";
+  var STORAGE_KEY_TEAMS_CHECKLIST = "wcai_teams_checklist";
+  var STORAGE_KEY_TEAMS_SECTIONS = "wcai_teams_sections";
+  var STORAGE_KEY_TEAMS_STEP = "wcai_teams_step";
 
   var STEPS = [
     { id: "company", label: "Company & Org" },
@@ -51,6 +63,11 @@
       localStorage.setItem(STORAGE_KEY_CHECKLIST, JSON.stringify(checklistState));
       localStorage.setItem(STORAGE_KEY_STEP, String(currentStep));
       localStorage.setItem(STORAGE_KEY_SECTIONS, JSON.stringify(openSections));
+      localStorage.setItem(STORAGE_KEY_WIZARD, currentWizard);
+      localStorage.setItem(STORAGE_KEY_TEAMS_CONFIG, JSON.stringify(teamsConfig));
+      localStorage.setItem(STORAGE_KEY_TEAMS_CHECKLIST, JSON.stringify(teamsChecklistState));
+      localStorage.setItem(STORAGE_KEY_TEAMS_SECTIONS, JSON.stringify(teamsOpenSections));
+      localStorage.setItem(STORAGE_KEY_TEAMS_STEP, String(teamsStep));
     } catch (e) { /* quota exceeded or unavailable */ }
   }
 
@@ -59,6 +76,9 @@
       var raw = localStorage.getItem(STORAGE_KEY_CONFIG);
       if (raw) {
         config = JSON.parse(raw);
+        var rawTeams = localStorage.getItem(STORAGE_KEY_TEAMS_CONFIG);
+        if (rawTeams) teamsConfig = JSON.parse(rawTeams);
+        else teamsConfig = WCAI.teamsModel.getDefaultTeamsConfig();
         return true;
       }
     } catch (e) { /* parse error */ }
@@ -74,6 +94,14 @@
       var raw2 = localStorage.getItem(STORAGE_KEY_SECTIONS);
       if (raw2) openSections = JSON.parse(raw2);
     } catch (e) { /* ignore */ }
+    try {
+      var rawTC = localStorage.getItem(STORAGE_KEY_TEAMS_CHECKLIST);
+      if (rawTC) teamsChecklistState = JSON.parse(rawTC);
+    } catch (e) { /* ignore */ }
+    try {
+      var rawTS = localStorage.getItem(STORAGE_KEY_TEAMS_SECTIONS);
+      if (rawTS) teamsOpenSections = JSON.parse(rawTS);
+    } catch (e) { /* ignore */ }
   }
 
   function loadStepFromStorage() {
@@ -82,6 +110,25 @@
       if (raw) {
         var step = parseInt(raw, 10);
         if (!isNaN(step) && step >= 0 && step < STEPS.length) return step;
+      }
+    } catch (e) { /* ignore */ }
+    return 0;
+  }
+
+  function loadWizardFromStorage() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_WIZARD);
+      if (raw === 'teams' || raw === 'change') currentWizard = raw;
+    } catch (e) { /* ignore */ }
+  }
+
+  function loadTeamsStepFromStorage() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_TEAMS_STEP);
+      if (raw) {
+        var step = parseInt(raw, 10);
+        var ta = WCAI.teamsApp;
+        if (!isNaN(step) && ta && step >= 0 && step < ta.STEPS_TEAMS.length) return step;
       }
     } catch (e) { /* ignore */ }
     return 0;
@@ -96,7 +143,9 @@
     if (!loadFromStorage()) {
       // First visit -- show welcome immediately while we try to load a config
       config = loader.getDefaultConfig();
+      teamsConfig = WCAI.teamsModel.getDefaultTeamsConfig();
       loadChecklistFromStorage();
+      renderTabs();
       renderNav();
       renderWelcome();
 
@@ -116,18 +165,26 @@
       return;
     }
     loadChecklistFromStorage();
+    loadWizardFromStorage();
     currentStep = loadStepFromStorage();
+    teamsStep = loadTeamsStepFromStorage();
 
+    renderTabs();
     renderNav();
-    goToStep(currentStep);
+    if (currentWizard === 'teams') {
+      WCAI.teamsApp.render(teamsStep);
+    } else {
+      var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
+      changeRenderers[currentStep]();
+    }
   }
 
   function renderWelcome() {
     var html =
-      '<div style="max-width:620px;margin:40px auto 0;text-align:center;">' +
+      '<div style="max-width:660px;margin:40px auto 0;text-align:center;">' +
         '<h1 style="font-size:28px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Welcome to WCAI</h1>' +
-        '<p style="font-size:14px;color:#94a3b8;margin-bottom:32px;line-height:1.7;">Windchill Config AI helps you build a complete change management configuration for PTC Windchill -- interactively, step by step.</p>' +
-        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">' +
+        '<p style="font-size:14px;color:#94a3b8;margin-bottom:32px;line-height:1.7;">Windchill Config AI helps you set up Teams & Participants and configure Change Management for PTC Windchill -- interactively, step by step.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;">' +
           '<button class="btn btn-primary" onclick="WCAI.app.loadExample()" style="padding:12px 24px;font-size:14px;">Load Example (Acme)</button>' +
           '<label style="display:inline-block;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;background:#334155;color:#e2e8f0;transition:all 0.15s;">' +
             'Upload Your YAML' +
@@ -135,18 +192,32 @@
           '</label>' +
           '<button class="btn btn-secondary" onclick="WCAI.app.goToStep(0)" style="padding:12px 24px;font-size:14px;">Start from Scratch</button>' +
         '</div>' +
+        // Two wizard entry point cards
+        '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
+          '<div style="padding:20px;background:#1e293b;border:1px solid rgba(34,197,94,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'teams\')">' +
+            '<div style="font-size:15px;font-weight:700;color:#22c55e;margin-bottom:6px;">1. Teams & Participants</div>' +
+            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Set up the foundation: organization, users, groups, licenses, context teams, and access control. <strong>Do this first.</strong></div>' +
+            '<div style="margin-top:10px;font-size:11px;color:#64748b;">7 steps -- Org, Directory, Users, Groups, Licenses, Teams, Checklist</div>' +
+          '</div>' +
+          '<div style="padding:20px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'change\')">' +
+            '<div style="font-size:15px;font-weight:700;color:#60a5fa;margin-bottom:6px;">2. Change Management</div>' +
+            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Configure the change process: OIR, business rules, preferences, associations, and deployment artifacts.</div>' +
+            '<div style="margin-top:10px;font-size:11px;color:#64748b;">9 steps -- Company, Groups, People, Roles, Preferences, Associations, Validate, Generate, Checklist</div>' +
+          '</div>' +
+        '</div>' +
+        // Feature cards
         '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;">' +
           '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">9 Guided Steps</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Company, groups, people, roles, preferences, associations, validation, generation, and deployment checklist.</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Two Guided Wizards</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Teams & Participants (7 steps) and Change Management (9 steps) with best-practice guidance throughout.</div>' +
           '</div>' +
           '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
             '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Deployment Artifacts</div>' +
             '<div style="font-size:12px;color:#94a3b8;">Generates OIR XML, business rules, preference scripts, and deployment batch files ready for your Windchill server.</div>' +
           '</div>' +
           '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Interactive Checklist</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Post-deployment checklist with exact Windchill navigation paths and PTC best-practice guidance.</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Interactive Checklists</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Post-deployment checklists with exact Windchill navigation paths and PTC best-practice guidance.</div>' +
           '</div>' +
           '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
             '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">No Server Required</div>' +
@@ -162,24 +233,57 @@
   // ============================================================
   function renderNav() {
     var nav = document.getElementById("nav");
+    var steps = currentWizard === 'teams' ? WCAI.teamsApp.STEPS_TEAMS : STEPS;
+    var activeStep = currentWizard === 'teams' ? teamsStep : currentStep;
     var html = "";
-    for (var i = 0; i < STEPS.length; i++) {
-      var s = STEPS[i];
-      html += '<li id="nav-' + i + '" onclick="WCAI.app.goToStep(' + i + ')" class="' + (i === currentStep ? 'active' : '') + '">' +
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      html += '<li id="nav-' + i + '" onclick="WCAI.app.goToStep(' + i + ')" class="' + (i === activeStep ? 'active' : '') + '">' +
         '<span class="num">' + (i + 1) + '</span> ' + s.label + '</li>';
     }
     nav.innerHTML = html;
 
-    var pct = Math.round((currentStep / (STEPS.length - 1)) * 100);
+    var pct = Math.round((activeStep / (steps.length - 1)) * 100);
     document.getElementById("progress-fill").style.width = pct + "%";
   }
 
-  function goToStep(i) {
-    currentStep = i;
+  function renderTabs() {
+    var tabs = document.getElementById('wizard-tabs');
+    if (!tabs) return;
+    var buttons = tabs.getElementsByClassName('sb-tab');
+    for (var i = 0; i < buttons.length; i++) {
+      var wiz = i === 0 ? 'teams' : 'change';
+      if (wiz === currentWizard) buttons[i].classList.add('active');
+      else buttons[i].classList.remove('active');
+    }
+  }
+
+  function switchWizard(wizard) {
+    currentWizard = wizard;
     saveToStorage();
+    renderTabs();
     renderNav();
-    var renderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
-    renderers[i]();
+    if (wizard === 'teams') {
+      WCAI.teamsApp.render(teamsStep);
+    } else {
+      var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
+      changeRenderers[currentStep]();
+    }
+  }
+
+  function goToStep(i) {
+    if (currentWizard === 'teams') {
+      teamsStep = i;
+      saveToStorage();
+      renderNav();
+      WCAI.teamsApp.render(i);
+    } else {
+      currentStep = i;
+      saveToStorage();
+      renderNav();
+      var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
+      changeRenderers[i]();
+    }
   }
 
   function navButtons(backEnabled) {
@@ -194,7 +298,11 @@
 
   function saveAndNext() {
     saveToStorage();
-    goToStep(currentStep + 1);
+    if (currentWizard === 'teams') {
+      goToStep(teamsStep + 1);
+    } else {
+      goToStep(currentStep + 1);
+    }
   }
 
   // ============================================================
@@ -245,6 +353,38 @@
     }
   };
 
+  var TEAMS_EXAMPLE_CONFIG = {
+    org: {
+      name: "AcmeOrg",
+      domain: "acme.com",
+      admins: ["tpatel"],
+    },
+    directory: {
+      type: "windchill",
+      auth_method: "windchill",
+      notes: "",
+    },
+    licenses: {
+      jsmith: "ptc_author",
+      bwilson: "ptc_author",
+      mchen: "ptc_author",
+      dkim: "ptc_pdmlink",
+      tpatel: "ptc_author",
+      rjones: "ptc_pdmlink",
+    },
+    context_roles: {
+      guest: [],
+      members: ["eng", "mfg", "qa", "mgmt"],
+      product_manager: ["mgmt"],
+      change_admin_1: ["eng"],
+      change_admin_2: ["mgmt"],
+      change_admin_3: ["mgmt"],
+      change_review_board: ["mgmt", "qa"],
+      promotion_approvers: ["mgmt"],
+      promotion_reviewers: ["qa"],
+    },
+  };
+
   function loadExample() {
     var prefix = prompt(
       'Enter a short prefix (e.g. XPR) to make this example unique.\n' +
@@ -255,10 +395,15 @@
     if (prefix === null) return; // user cancelled
     prefix = prefix.trim().toUpperCase();
 
-    // Deep-copy the embedded example so each load is independent
+    // Deep-copy both examples so each load is independent
     config = JSON.parse(JSON.stringify(EXAMPLE_CONFIG));
     config = loader.normalize(config);
-    if (prefix) applyPrefix(prefix);
+    teamsConfig = JSON.parse(JSON.stringify(TEAMS_EXAMPLE_CONFIG));
+
+    if (prefix) {
+      applyPrefix(prefix);
+      applyTeamsPrefix(prefix);
+    }
     saveToStorage();
     // Auto-download the prefixed YAML so the user has a copy
     if (prefix) {
@@ -310,6 +455,32 @@
         if (r.key) r.key = pfx + '_' + r.key;
       });
     }
+  }
+
+  function applyTeamsPrefix(pfx) {
+    var lo = pfx.toLowerCase();
+
+    // Org
+    teamsConfig.org.name = pfx + teamsConfig.org.name;
+
+    // Build group mapping from original example
+    var groupMap = {};
+    for (var i = 0; i < EXAMPLE_CONFIG.groups.length; i++) {
+      var g = EXAMPLE_CONFIG.groups[i];
+      groupMap[g.id] = lo + '_' + g.id;
+    }
+
+    // Context roles -- remap group IDs
+    var newCtxRoles = {};
+    for (var rk in teamsConfig.context_roles) {
+      var arr = teamsConfig.context_roles[rk] || [];
+      var newArr = [];
+      for (var j = 0; j < arr.length; j++) {
+        newArr.push(groupMap[arr[j]] || arr[j]);
+      }
+      newCtxRoles[rk] = newArr;
+    }
+    teamsConfig.context_roles = newCtxRoles;
   }
 
   // ============================================================
@@ -374,15 +545,27 @@
   // Reset
   // ============================================================
   function resetAll() {
-    if (!confirm("Reset all data? This clears your config, checklist, and all progress.")) return;
+    if (!confirm("Reset all data? This clears your config, checklist, and all progress for both wizards.")) return;
     localStorage.removeItem(STORAGE_KEY_CONFIG);
     localStorage.removeItem(STORAGE_KEY_CHECKLIST);
     localStorage.removeItem(STORAGE_KEY_STEP);
     localStorage.removeItem(STORAGE_KEY_SECTIONS);
+    localStorage.removeItem(STORAGE_KEY_WIZARD);
+    localStorage.removeItem(STORAGE_KEY_TEAMS_CONFIG);
+    localStorage.removeItem(STORAGE_KEY_TEAMS_CHECKLIST);
+    localStorage.removeItem(STORAGE_KEY_TEAMS_SECTIONS);
+    localStorage.removeItem(STORAGE_KEY_TEAMS_STEP);
     config = loader.getDefaultConfig();
+    teamsConfig = WCAI.teamsModel.getDefaultTeamsConfig();
     checklistState = {};
     openSections = {};
+    teamsChecklistState = {};
+    teamsOpenSections = {};
     generatedFiles = null;
+    currentWizard = "teams";
+    teamsStep = 0;
+    currentStep = 0;
+    renderTabs();
     goToStep(0);
   }
 
@@ -948,71 +1131,11 @@
       html += clItem('org_exists', 'Verify organization \'' + org + '\' exists', 'Navigate to Site level and confirm your org is listed. If missing, create it now.', 'Site &rarr; Utilities &rarr; Organization Administration');
       html += endSection();
 
-      // === STEP 2: Assign Organization Administrators ===
-      html += beginSection('s2', 2, 'Assign Organization Administrators', 'PREREQUISITE: Required before creating groups, association rules, or access policies', 'manual');
-      html += bp('Why do you need Organization Administrators?',
-        '<p>Initially, <strong>no organization administrator is defined</strong> for a new organization context. Without one, only Site Administrators can perform org-level tasks.</p>' +
-        '<p>Organization Administrators can:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
-          '<li>Create and manage <strong>user-defined groups</strong> within the organization</li>' +
-          '<li>Configure <strong>change association rules</strong> (only Site and Org Admins can do this)</li>' +
-          '<li>Manage <strong>access control policies</strong> at the organization level</li>' +
-          '<li>Manage organization templates (lifecycle, workflow, team templates)</li>' +
-          '<li>Control who can create Products and Libraries within the organization</li>' +
-        '</ul>' +
-        '<p>The person performing Steps 4, 9, and 10 of this checklist must have Org Admin privileges.</p>'
-      );
-      html += clItem('orgadmin_assign', 'Assign at least one Organization Administrator for \'' + org + '\'',
-        'Add the Windchill administrator user(s) who will perform the remaining setup steps. This user must already exist at the Site level.',
-        'Browse &rarr; Organizations &rarr; ' + org + ' &rarr; Administrators &rarr; Add Users to Administrators Group');
-      html += clItem('orgadmin_verify', 'Verify Org Admin can access org-level Utilities',
-        'Sign in as the assigned Org Admin and confirm you can see Participant Administration, Business Rules, and Policy Administration under the org context.',
-        org + ' &rarr; Utilities');
-      html += endSection();
+      // NOTE: Org admins, user accounts, and license verification are covered
+      // in the Teams & Participants wizard checklist. Switch to that tab for those steps.
 
-      // === STEP 3: Verify Users ===
-      html += beginSection('s3', 3, 'Verify User Accounts Exist', 'Users must exist before they can join groups or teams', 'manual');
-      html += bp('Where do Windchill users come from?',
-        '<p><strong>LDAP/Active Directory sync</strong> &mdash; Most common in enterprise environments. Users are managed in AD and synced automatically.</p>' +
-        '<p><strong>Manual creation</strong> &mdash; For smaller or dev/test environments via Participant Administration.</p>'
-      );
-      people.forEach(function (p, i) {
-        var id = 'user_' + i;
-        html += clItem(id, 'Verify user: ' + esc(p.name || p.username) + ' (' + esc(p.username) + ')', 'Search in Participant Administration.', 'Site &rarr; Utilities &rarr; Participant Administration &rarr; Search \'' + esc(p.username) + '\'');
-      });
-      html += endSection();
-
-      // === STEP 4: Verify License Group Membership ===
-      html += beginSection('s4', 4, 'Verify License Group Membership', 'Users must be in a license group or they cannot access Windchill', 'manual');
-      html += bp('Why are license groups critical?',
-        '<p><strong>If a user is not a member of any license group, access to Windchill is denied.</strong> This is a hard gate -- users cannot log in or perform actions without license group membership.</p>' +
-        '<p>Windchill uses a three-tier licensing system:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
-          '<li><strong>License Profiles</strong> &mdash; Maintained by PTC, cannot be altered. Define which actions a license allows.</li>' +
-          '<li><strong>License Groups</strong> &mdash; Groups of users entitled to licenses. Administrators add users here.</li>' +
-          '<li><strong>License Names</strong> &mdash; Your purchased license keys (Named User or Active Daily User).</li>' +
-        '</ul>' +
-        '<p>For change management, users typically need one of:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
-          '<li><strong>PTC Author</strong> &mdash; Full authoring including change management actions</li>' +
-          '<li><strong>PTC PDMLink Module</strong> &mdash; Core PDM module that includes change management</li>' +
-          '<li><strong>PTC Contributor</strong> &mdash; Limited capabilities (may not cover all change actions)</li>' +
-        '</ul>' +
-        '<p><strong>PTC View and Print Only</strong> users cannot create change objects.</p>'
-      );
-      html += clItem('license_review', 'Review available license groups',
-        'Check which license groups are available and how many seats remain. Common groups: PTC Author, PTC PDMLink, PTC Contributor.',
-        'Site &rarr; Utilities &rarr; License Management');
-      people.forEach(function (p, i) {
-        var id = 'license_user_' + i;
-        html += clItem(id, 'Verify license for: ' + esc(p.name || p.username) + ' (' + esc(p.username) + ')',
-          'Ensure this user is in an appropriate license group (PTC Author or PTC PDMLink) for change management actions.',
-          'Site &rarr; Utilities &rarr; Participant Administration &rarr; Search \'' + esc(p.username) + '\' &rarr; Groups tab');
-      });
-      html += endSection();
-
-      // === STEP 5: Create Groups ===
-      html += beginSection('s5', 5, 'Create Groups and Add Users', 'Create Windchill groups, add users. Groups are assigned to roles.', 'manual');
+      // === STEP 2: Create Groups ===
+      html += beginSection('s5', 2, 'Create Groups and Add Users', 'Create Windchill groups, add users. Groups are assigned to roles.', 'manual');
       html += bp('Best Practice: Why groups instead of individual users?',
         '<p>The Windchill best practice pattern is:</p>' +
         '<p style="text-align:center;font-size:14px;font-weight:700;color:#22c55e;padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
@@ -1036,7 +1159,7 @@
       html += endSection();
 
       // === STEP 6: Add Groups to OOTB Team Template Roles ===
-      html += beginSection('s6', 6, 'Add Groups to OOTB Team Template Roles', 'Populate the existing Site-level team templates with your groups', 'manual');
+      html += beginSection('s6', 3, 'Add Groups to OOTB Team Template Roles', 'Populate the existing Site-level team templates with your groups', 'manual');
       html += bp('Understanding Team Templates',
         '<p>Windchill ships with <strong>4 out-of-the-box team templates</strong> at the Site level. They are already bound to change objects through OIRs and already contain the correct role definitions:</p>' +
         '<p style="font-size:12px;color:#94a3b8;padding:4px 0 8px;">Problem Report Team &bull; Change Request Team &bull; Change Notice Team &bull; Change Activity Team</p>' +
@@ -1061,9 +1184,9 @@
       html += endSection();
 
       // === STEP 7: Context Teams ===
-      html += beginSection('s7', 7, 'Configure Context Teams (per Product/Library)', 'PREFERRED: Override team template assignments at each Product/Library', 'manual');
+      html += beginSection('s7', 4, 'Configure Context Teams (per Product/Library)', 'PREFERRED: Override team template assignments at each Product/Library', 'manual');
       html += bp('Best Practice: Context Teams vs. Custom Team Templates',
-        '<p>After populating the OOTB team templates (Step 4), you can further customize participant assignments per Product or Library using <strong>context teams</strong>.</p>' +
+        '<p>After populating the OOTB team templates (Step 3), you can further customize participant assignments per Product or Library using <strong>context teams</strong>.</p>' +
         '<div class="bp-comparison">' +
           '<div class="bp-option recommended">' +
             '<h4>Context Teams <span class="bp-tag preferred">PTC Preferred</span></h4>' +
@@ -1077,7 +1200,7 @@
           '<div class="bp-option alternative">' +
             '<h4>Skip (use template defaults) <span class="bp-tag alternative">Also Valid</span></h4>' +
             '<ul>' +
-              '<li>If all Products use the same teams, Step 4 may be sufficient</li>' +
+              '<li>If all Products use the same teams, Step 3 may be sufficient</li>' +
               '<li>Context teams are only needed if Products differ</li>' +
             '</ul>' +
           '</div>' +
@@ -1123,7 +1246,7 @@
       html += endSection();
 
       // === STEP 8: Automated Deployment ===
-      html += beginSection('s8', 8, 'Run Automated Deployment', 'Loads OIR, business rules, and preferences', 'auto');
+      html += beginSection('s8', 5, 'Run Automated Deployment', 'Loads OIR, business rules, and preferences', 'auto');
       html += bp('What does deploy_all.bat actually do?',
         '<p><strong>Object Initialization Rules (OIR)</strong> &mdash; Binds each change object to its lifecycle, workflow, and team template.</p>' +
         '<p><strong>Business Rules</strong> &mdash; CHANGEABLE_PRE_RELEASE validates objects before release (not checked out, valid release targets).</p>' +
@@ -1143,7 +1266,7 @@
       html += endSection();
 
       // === STEP 9: Association Rules ===
-      html += beginSection('s9', 9, 'Configure Association Rules', 'Disable OOB rules and create yours', 'manual');
+      html += beginSection('s9', 6, 'Configure Association Rules', 'Disable OOB rules and create yours', 'manual');
       html += bp('Best Practice: Why disable the out-of-the-box rules?',
         '<div class="bp-quote"><p>In most cases, PTC recommends customers to disable the out-of-the-box rules and define the rules they want for their change process.</p>' +
         '<div class="bp-source">&mdash; PTC Windchill Change Implementation Training Guide</div></div>' +
@@ -1158,7 +1281,7 @@
       html += endSection();
 
       // === STEP 10: Access Control ===
-      html += beginSection('s10', 10, 'Verify Access Control Policies', 'Ensure lifecycle states have correct permissions per role', 'manual');
+      html += beginSection('s10', 7, 'Verify Access Control Policies', 'Ensure lifecycle states have correct permissions per role', 'manual');
       html += bp('What do access control policies affect?',
         '<p>Access control policies determine who can read, modify, or delete objects at each lifecycle state. Pay attention to Change Admin roles having modify access where they act.</p>' +
         '<p>The OOTB policies are generally reasonable, but verify they align with your process.</p>'
@@ -1174,7 +1297,7 @@
       html += endSection();
 
       // === STEP 11: End-to-End Test ===
-      html += beginSection('s11', 11, 'End-to-End Test', 'Verify the complete change process works', 'manual');
+      html += beginSection('s11', 8, 'End-to-End Test', 'Verify the complete change process works', 'manual');
       html += bp('How to approach testing',
         '<p>PTC recommends an <strong>iterative approach</strong>. Sign in as different users to test each role:</p>' +
         '<p><strong>PR Author</strong> creates PR &rarr; <strong>Change Admin I</strong> analyzes, creates CR &rarr; <strong>CRB</strong> reviews &rarr; <strong>Change Admin II</strong> creates CN &rarr; <strong>Assignees</strong> complete tasks &rarr; <strong>Reviewers</strong> verify &rarr; <strong>Change Admin II</strong> releases.</p>' +
@@ -1280,12 +1403,24 @@
   });
 
   // ============================================================
+  // Internal getters for cross-module access (used by teams-app.js)
+  // ============================================================
+  function _getConfig() { return config; }
+  function _getTeamsConfig() { return teamsConfig; }
+  function _getTeamsStep() { return teamsStep; }
+  function _getTeamsChecklistState() { return teamsChecklistState; }
+  function _getTeamsOpenSections() { return teamsOpenSections; }
+  function _saveConfig() { saveToStorage(); }
+  function _saveTeams() { saveToStorage(); }
+
+  // ============================================================
   // Export public API
   // ============================================================
   WCAI.app = {
     init: init,
     goToStep: goToStep,
     saveAndNext: saveAndNext,
+    switchWizard: switchWizard,
     // Company
     setCompany: setCompany,
     toggleCompany: toggleCompany,
@@ -1317,5 +1452,13 @@
     // Example + Reset
     loadExample: loadExample,
     resetAll: resetAll,
+    // Internal getters for teams module
+    _getConfig: _getConfig,
+    _getTeamsConfig: _getTeamsConfig,
+    _getTeamsStep: _getTeamsStep,
+    _getTeamsChecklistState: _getTeamsChecklistState,
+    _getTeamsOpenSections: _getTeamsOpenSections,
+    _saveConfig: _saveConfig,
+    _saveTeams: _saveTeams,
   };
 })();

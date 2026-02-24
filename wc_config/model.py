@@ -179,7 +179,7 @@ PREFERENCES = {
         wc_pref_key="crToCnCardinality",
         wc_pref_node="ChangeManagement",
         default="No",
-        description="Many CRs to many CNs",
+        description="Allow many:many CR-to-CN linking (default: many:1)",
     ),
     "cr_to_pr_cardinality": ChangePref(
         yaml_key="cr_to_pr_cardinality",
@@ -187,7 +187,7 @@ PREFERENCES = {
         wc_pref_key="crToPrCardinality",
         wc_pref_node="ChangeManagement",
         default="No",
-        description="Many CRs to many PRs",
+        description="Allow many:many CR-to-PR linking (default: many:1)",
     ),
     "optional_review": ChangePref(
         yaml_key="optional_review",

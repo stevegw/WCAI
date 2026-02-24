@@ -1,0 +1,185 @@
+# ═══════════════════════════════════════════════════════════════════
+# WCAI -- Windchill Config AI -- Company Configuration
+# ═══════════════════════════════════════════════════════════════════
+# This YAML file is the single source of truth for your company's
+# Windchill setup. Define it once, version-control
+# it, and use the CLI tool to generate all deployment artifacts.
+#
+# Run:  python -m wc_config.cli wizard        (interactive setup)
+#       python -m wc_config.cli generate      (from this file)
+#       python -m wc_config.cli validate      (check before deploy)
+#       python -m wc_config.cli deploy --dry   (preview deployment)
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── Company & Windchill Context ─────────────────────────────────
+company:
+  name: "Acme Engineering"
+  org: "AcmeOrg"                    # Windchill OrgContainer name
+  site: "acme-wc-prod"             # Windchill site identifier
+  context_level: "organization"     # Where config is deployed: site | organization
+  lock_preferences: true            # Lock prefs to prevent lower-context overrides
+  use_flexible_change: true         # Windchill 11.2+ flexible change items
+
+# ─── Groups / Departments ───────────────────────────────────────
+groups:
+  - id: eng
+    name: "Engineering"
+    description: "Product engineering and design team"
+
+  - id: mfg
+    name: "Manufacturing"
+    description: "Manufacturing engineering and production"
+
+  - id: qa
+    name: "Quality Assurance"
+    description: "Quality and compliance team"
+
+  - id: mgmt
+    name: "Management"
+    description: "Engineering and program management"
+
+# ─── People ─────────────────────────────────────────────────────
+people:
+  - id: jsmith
+    name: "Jane Smith"
+    username: "jsmith"
+    email: "jsmith@acme.com"
+    group: eng
+
+  - id: bwilson
+    name: "Bob Wilson"
+    username: "bwilson"
+    email: "bwilson@acme.com"
+    group: eng
+
+  - id: mchen
+    name: "Maria Chen"
+    username: "mchen"
+    email: "mchen@acme.com"
+    group: mfg
+
+  - id: dkim
+    name: "David Kim"
+    username: "dkim"
+    email: "dkim@acme.com"
+    group: qa
+
+  - id: tpatel
+    name: "Tanya Patel"
+    username: "tpatel"
+    email: "tpatel@acme.com"
+    group: mgmt
+
+  - id: rjones
+    name: "Robert Jones"
+    username: "rjones"
+    email: "rjones@acme.com"
+    group: mgmt
+
+# ─── Role Assignments ───────────────────────────────────────────
+# Maps Windchill change management roles to your GROUPS.
+# Best practice: Users -> Groups -> Roles
+# Never assign individual users directly to roles in templates.
+#
+# Available roles:
+#   change_admin_1    - Manages PRs and CR analysis
+#   change_admin_2    - Creates CNs, manages CRB, audits
+#   change_admin_3    - Oversees CN execution and release
+#   change_impl       - Executes implementation plan tasks
+#   change_review_board - Reviews and approves/rejects CRs
+#   pr_author         - Creates and submits problem reports
+#   cr_author         - Creates and submits change requests
+#   assignee          - Assigned to change notice tasks
+#   reviewer          - Reviews change notice task deliverables
+roles:
+  change_admin_1:
+    - eng
+  change_admin_2:
+    - mgmt
+  change_admin_3:
+    - mgmt
+  change_impl:
+    - eng
+    - mfg
+  change_review_board:
+    - mgmt
+    - qa
+  pr_author:
+    - eng
+    - mfg
+    - qa
+  cr_author:
+    - eng
+    - mgmt
+  assignee:
+    - eng
+    - mfg
+  reviewer:
+    - qa
+
+# ─── Change Management Preferences ──────────────────────────────
+# These map directly to Windchill Preference Management settings.
+# Values: "Yes" or "No"
+preferences:
+  cn_without_cr: "No"               # Change Notices without Change Requests
+  auto_cn_creation: "No"            # Automatic Change Notice Creation
+  sequenced_plan: "Yes"             # Sequenced Plan Execution Order
+  cr_to_cn_cardinality: "No"        # Many CRs to many CNs
+  cr_to_pr_cardinality: "No"        # Many CRs to many PRs
+  optional_review: "No"             # Change task without review
+  info_propagation: "Yes"           # Propagate data PR→CR→CN
+  affected_end_items: "Yes"         # Show affected end items table
+
+# ─── Change Association Rules ───────────────────────────────────
+# Controls which change objects can be linked together.
+# PTC recommends disabling OOB rules and defining only what you need.
+associations:
+  pr_to_cr:
+    enabled: true
+    cardinality: "many:1"
+    owning_role: "cr"               # Role B owns the link
+    required_role: "none"
+
+  cr_to_cn:
+    enabled: true
+    cardinality: "many:1"
+    owning_role: "cn"
+    required_role: "none"
+
+  cn_to_task:
+    enabled: true
+    cardinality: "1:many"
+    owning_role: "cn"
+    required_role: "none"
+
+  pr_to_cn:                          # Direct shortcut (non-standard)
+    enabled: false
+    cardinality: "many:1"
+    owning_role: "cn"
+    required_role: "none"
+
+# ─── Business Rules ─────────────────────────────────────────────
+# Pre-release validation rules applied to changeables before release.
+business_rules:
+  rule_set_name: "ACME_PRE_RELEASE"
+  rules:
+    - key: "ACME_CHECKOUT_RULE"
+      selector: "CHECKOUT_RULE"
+      description: "Fails if changeable is checked out"
+      block_number: 1
+
+    - key: "ACME_RELEASE_TARGET_RULE"
+      selector: "RELEASE_TARGET_RULE"
+      description: "Validates change transition from source to destination state"
+      block_number: 10
+
+# ─── Custom Attributes (optional) ───────────────────────────────
+# Additional attributes to add to change object types via Type Manager.
+custom_attributes: []
+  # - name: "Urgency"
+  #   type: "string"
+  #   applies_to: ["Problem Report", "Change Request"]
+  #   values: ["Low", "Medium", "High", "Critical"]
+  # - name: "Cost Impact"
+  #   type: "float"
+  #   applies_to: ["Change Request", "Change Notice"]

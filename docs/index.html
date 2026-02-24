@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WCAI -- Windchill Config AI Wizard</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <h2>WCAI</h2>
+      <p>Windchill Config AI</p>
+    </div>
+    <ul class="sb-nav" id="nav"></ul>
+    <div class="sb-status">
+      <p>Progress</p>
+      <div class="bar"><div class="fill" id="progress-fill"></div></div>
+    </div>
+    <div class="sb-actions">
+      <label class="sb-upload-label">
+        Upload YAML Config
+        <input type="file" accept=".yaml,.yml" onchange="if(this.files[0]) WCAI.app.uploadYaml(this.files[0])">
+      </label>
+      <button onclick="WCAI.app.downloadYaml()">Download YAML Config</button>
+      <button class="sb-reset" onclick="WCAI.app.resetAll()">Reset All</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main"></div>
+</div>
+
+<!-- CDN Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<!-- WCAI Modules (order matters: model -> loader -> validators -> generators -> app) -->
+<script src="js/model.js"></script>
+<script src="js/loader.js"></script>
+<script src="js/validators.js"></script>
+<script src="js/generators.js"></script>
+<script src="js/app.js"></script>
+
+<!-- Boot -->
+<script>WCAI.app.init();</script>
+</body>
+</html>

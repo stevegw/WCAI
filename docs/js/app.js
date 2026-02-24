@@ -39,7 +39,7 @@
     { id: "assoc", label: "Associations" },
     { id: "validate", label: "Validate" },
     { id: "generate", label: "Generate" },
-    { id: "checklist", label: "Deploy Checklist" },
+    { id: "checklist", label: "Deployment Checklist" },
   ];
 
   // ============================================================
@@ -653,11 +653,11 @@
           '<p>4. Preview first: <code>deploy_all.bat --dry-run</code></p>' +
           '<p>5. Deploy for real: <code>deploy_all.bat</code></p>' +
           '<p style="margin-top:8px;color:#64748b;">The .bat files only work inside a Windchill shell (not a regular command prompt). The Windchill shell sets up the Java classpath and environment needed by the <code>windchill</code> CLI commands.</p>' +
-          '<p style="margin-top:10px">6. After deployment, open the <strong>Deploy Checklist</strong> for the manual steps (teams, association rules, access control, testing):</p>' +
+          '<p style="margin-top:10px">6. After deployment, open the <strong>Deployment Checklist</strong> for the manual steps (teams, association rules, access control, testing):</p>' +
         '</div>' +
         '<div style="text-align:center; margin-top:16px;">' +
           '<button class="btn btn-primary" onclick="WCAI.app.goToStep(' + (STEPS.length - 1) + ')" style="padding:12px 28px;">' +
-            'Open Post-Deploy Checklist ->' +
+            'Open Deployment Checklist ->' +
           '</button>' +
         '</div>' +
         navButtons();

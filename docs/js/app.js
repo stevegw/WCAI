@@ -144,6 +144,27 @@
   }
 
   // ============================================================
+  // Load Example Config
+  // ============================================================
+  function loadExample() {
+    // Try fetching from configs/ (works on GitHub Pages and local server)
+    fetch('configs/acme_engineering.yaml')
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (yamlStr) {
+        config = loader.parseYaml(yamlStr);
+        saveToStorage();
+        goToStep(0);
+      })
+      .catch(function () {
+        // Fallback for file:// protocol where fetch doesn't work
+        alert('Could not load example file automatically.\n\nIf you opened index.html directly from disk, use the "Upload YAML Config" button instead and select:\n  docs/configs/acme_engineering.yaml');
+      });
+  }
+
+  // ============================================================
   // YAML Upload / Download
   // ============================================================
   function uploadYaml(file) {
@@ -222,9 +243,20 @@
   // ============================================================
   function renderCompany() {
     var c = config.company;
+    var isEmpty = !c.name && !c.org && (config.people || []).length === 0;
+    var gettingStarted = '';
+    if (isEmpty) {
+      gettingStarted =
+        '<div style="padding:14px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;margin-bottom:20px;font-size:12px;color:#93c5fd;line-height:1.7;">' +
+          '<strong style="font-size:13px;">Getting started?</strong> ' +
+          'Click <strong>"Load Example (Acme)"</strong> in the sidebar to see a fully populated config, or fill in your own details below. ' +
+          'You can also <strong>upload an existing YAML</strong> config file.' +
+        '</div>';
+    }
     document.getElementById("main").innerHTML =
       '<h1 class="sec-title">Company & Organization</h1>' +
       '<p class="sec-desc">Define your Windchill site and organization context. These values determine where configuration artifacts are deployed in the Windchill context hierarchy.</p>' +
+      gettingStarted +
       '<div class="row">' +
         '<div class="field"><label>Company Name *</label>' +
           '<input id="c-name" value="' + esc(c.name) + '" placeholder="e.g. Acme Engineering" oninput="WCAI.app.setCompany(\'name\',this.value)"></div>' +
@@ -1094,7 +1126,8 @@
     // Checklist
     toggleSection: toggleSection,
     toggleCheck: toggleCheck,
-    // Reset
+    // Example + Reset
+    loadExample: loadExample,
     resetAll: resetAll,
   };
 })();

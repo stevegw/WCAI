@@ -20,6 +20,7 @@
       <div class="bar"><div class="fill" id="progress-fill"></div></div>
     </div>
     <div class="sb-actions">
+      <button onclick="WCAI.app.loadExample()">Load Example (Acme)</button>
       <label class="sb-upload-label">
         Upload YAML Config
         <input type="file" accept=".yaml,.yml" onchange="if(this.files[0]) WCAI.app.uploadYaml(this.files[0])">

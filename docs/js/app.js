@@ -94,7 +94,13 @@
     model = m.getModelMetadata();
 
     if (!loadFromStorage()) {
-      // First visit -- try to load the user's saved config from the server
+      // First visit -- show welcome immediately while we try to load a config
+      config = loader.getDefaultConfig();
+      loadChecklistFromStorage();
+      renderNav();
+      renderWelcome();
+
+      // Try to load a saved config in the background
       fetch('configs/company_config.yaml')
         .then(function (res) {
           if (!res.ok) throw new Error('not found');
@@ -103,24 +109,53 @@
         .then(function (yamlStr) {
           config = loader.parseYaml(yamlStr);
           saveToStorage();
-          renderNav();
-          goToStep(0);
+          // Stay on welcome -- user can navigate when ready
         })
         .catch(function () {
-          // No saved config found -- start with blank default
-          config = loader.getDefaultConfig();
-          renderNav();
-          goToStep(0);
+          // No saved config found -- keep blank default
         });
-      loadChecklistFromStorage();
-      renderNav();
-      return; // async -- will render when fetch completes
+      return;
     }
     loadChecklistFromStorage();
     currentStep = loadStepFromStorage();
 
     renderNav();
     goToStep(currentStep);
+  }
+
+  function renderWelcome() {
+    var html =
+      '<div style="max-width:620px;margin:40px auto 0;text-align:center;">' +
+        '<h1 style="font-size:28px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Welcome to WCAI</h1>' +
+        '<p style="font-size:14px;color:#94a3b8;margin-bottom:32px;line-height:1.7;">Windchill Config AI helps you build a complete change management configuration for PTC Windchill -- interactively, step by step.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">' +
+          '<button class="btn btn-primary" onclick="WCAI.app.loadExample()" style="padding:12px 24px;font-size:14px;">Load Example (Acme)</button>' +
+          '<label style="display:inline-block;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;background:#334155;color:#e2e8f0;transition:all 0.15s;">' +
+            'Upload Your YAML' +
+            '<input type="file" accept=".yaml,.yml" style="display:none;" onchange="if(this.files[0]) WCAI.app.uploadYaml(this.files[0])">' +
+          '</label>' +
+          '<button class="btn btn-secondary" onclick="WCAI.app.goToStep(0)" style="padding:12px 24px;font-size:14px;">Start from Scratch</button>' +
+        '</div>' +
+        '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;">' +
+          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">9 Guided Steps</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Company, groups, people, roles, preferences, associations, validation, generation, and deployment checklist.</div>' +
+          '</div>' +
+          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Deployment Artifacts</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Generates OIR XML, business rules, preference scripts, and deployment batch files ready for your Windchill server.</div>' +
+          '</div>' +
+          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Interactive Checklist</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Post-deployment checklist with exact Windchill navigation paths and PTC best-practice guidance.</div>' +
+          '</div>' +
+          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">No Server Required</div>' +
+            '<div style="font-size:12px;color:#94a3b8;">Runs entirely in your browser. Your config is saved locally and never leaves your machine.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.getElementById("main").innerHTML = html;
   }
 
   // ============================================================
@@ -263,20 +298,9 @@
   // ============================================================
   function renderCompany() {
     var c = config.company;
-    var isEmpty = !c.name && !c.org && (config.people || []).length === 0;
-    var gettingStarted = '';
-    if (isEmpty) {
-      gettingStarted =
-        '<div style="padding:14px 16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:8px;margin-bottom:20px;font-size:12px;color:#93c5fd;line-height:1.7;">' +
-          '<strong style="font-size:13px;">Getting started?</strong> ' +
-          'Click <strong>"Load Example (Acme)"</strong> in the sidebar to see a fully populated config, or fill in your own details below. ' +
-          'You can also <strong>upload an existing YAML</strong> config file.' +
-        '</div>';
-    }
     document.getElementById("main").innerHTML =
       '<h1 class="sec-title">Company & Organization</h1>' +
       '<p class="sec-desc">Define your Windchill site and organization context. These values determine where configuration artifacts are deployed in the Windchill context hierarchy.</p>' +
-      gettingStarted +
       '<div class="row">' +
         '<div class="field"><label>Company Name *</label>' +
           '<input id="c-name" value="' + esc(c.name) + '" placeholder="e.g. Acme Engineering" oninput="WCAI.app.setCompany(\'name\',this.value)"></div>' +

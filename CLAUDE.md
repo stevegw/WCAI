@@ -14,10 +14,9 @@ The target user is a Windchill administrator who has completed PTC's Change Impl
 
 The following PTC training document is the **authoritative source** for all Windchill change management knowledge in this project. Read it before making architectural decisions about the checklist or workflow:
 
-- `WCCMCHIMTrainingGuidelessimages.pdf` - PTC University "Windchill: Change Implementation" training guide
-- `windchill-change-impl-guide.html` - Companion HTML implementation guide
+- `docs/WCBA-TEAM-Training-Guide.pdf` - PTC training guide for teams and participants
 
-Key diagrams (PNG files in project root):
+Key diagrams (PNG files in project root, if present):
 - `OUTOFTHEBOX_CHANGE_OBJECTS_DATA_MODEL.png` - PR, CR, CN, Variance relationships
 - `CHANGE_MANAGEMENT_CONFIGURATION.png` - The 8 configurable components
 - `CHANGE_ASSOCIATION_RULES.png` - How association rules are defined
@@ -205,31 +204,95 @@ Note: Some preferences (Automatic CN Creation, CN without CR, CR-to-CN Cardinali
 - Server runs **Windows**
 - Deployment scripts must be **.bat** files (not bash)
 - Windchill shell is pre-configured - no need to source environment scripts
-- Deploy by: copy generated/ folder to server, open Windchill shell, cd to folder, run deploy_all.bat
-- All output must be **ASCII-only** - Windows console cannot render Unicode box-drawing characters
+- Deploy by: copy downloaded artifacts to server, open Windchill shell, cd to folder, run deploy_all.bat
+- All generated output must be **ASCII-only** - Windows console cannot render Unicode box-drawing characters
 
 ---
 
 ## Project Architecture
 
+### Overview
+
+This is a **static vanilla web application** hosted from the `docs/` folder. No server required -- it runs entirely in the browser (works with `file://` or any static server, including GitHub Pages). All config loading, validation, generation, and artifact download happen client-side in JavaScript.
+
 ### File Structure
 
 ```
-windchill-config-as-code/
-  run.py                          # Web UI server (Flask-like, zero dependencies beyond pyyaml)
-  wc_config/
-    __init__.py
-    __main__.py                   # Entry point for CLI
-    model.py                      # Windchill data model (change objects, roles, preferences)
-    loader.py                     # YAML config loader
-    validators.py                 # Config validation (checks groups, roles, associations)
-    generators.py                 # Generates OIR XML, business rules XML, .bat scripts
-    wizard.py                     # CLI wizard (alternative to web UI)
-    cli.py                        # CLI commands (show, validate, generate)
+docs/
+  index.html                      # Single-page app shell with sidebar + main area
+  css/
+    style.css                     # All styles
+  js/
+    model.js                      # Windchill data model & constants (change objects, roles, preferences)
+    loader.js                     # YAML config parser (uses js-yaml CDN)
+    validators.js                 # Config validation (checks groups, roles, associations)
+    generators.js                 # Generates OIR XML, business rules XML, .bat scripts in-browser
+    teams-model.js                # Teams & Participants companion wizard model
+    teams-validators.js           # Teams & Participants validation
+    teams-app.js                  # Teams & Participants wizard UI
+    app.js                        # Main application: wizard steps, rendering, state management
   configs/
-    examples/
-      acme_engineering.yaml       # Example YAML config
+    acme_engineering.yaml         # Example YAML config (loaded via fetch or embedded)
+    company_config.yaml           # Minimal example config
 ```
+
+### CDN Dependencies
+
+Loaded via `<script>` tags in `index.html`:
+- **js-yaml 4.1.0** - YAML parsing/serialization
+- **JSZip 3.10.1** - ZIP file creation for artifact download
+
+### Module Pattern
+
+All JS uses an IIFE module pattern attaching to `window.WCAI`:
+- `WCAI.model` - constants, change objects, roles, preferences
+- `WCAI.loader` - YAML parsing
+- `WCAI.validators` - validation logic
+- `WCAI.generators` - artifact generation
+- `WCAI.teamsModel` - teams wizard model
+- `WCAI.teamsValidators` - teams wizard validation
+- `WCAI.teamsApp` - teams wizard UI
+- `WCAI.app` - main application (init, routing, rendering, state)
+
+Script load order in `index.html` matters (model -> loader -> validators -> generators -> teams-* -> app).
+
+### Two Wizard Modes
+
+The app has a **tab switcher** in the sidebar toggling between two wizards:
+
+**Teams & Participants Wizard** (default tab):
+- Guides through org setup, user verification, license groups, group creation, team template population, and context teams
+- Interactive checklist with best-practice panels
+
+**Change Management Wizard** (9 steps):
+1. Company & Org
+2. Groups
+3. People
+4. Role Mapping (groups to roles via clickable chips)
+5. Preferences (toggle switches for 8 change mgmt prefs)
+6. Associations (enable/disable with cardinality)
+7. Validate (runs client-side validators, shows errors/warnings)
+8. Generate (creates deployment artifacts, download as ZIP)
+9. Post-Deployment Checklist (interactive, with best-practice panels)
+
+### State Management
+
+- All state persisted to **localStorage** (config, checklist progress, current step, active wizard)
+- Storage keys prefixed with `wcai_` and `wcai_teams_`
+- "Reset All" clears localStorage and reinitializes
+
+### Generated Artifacts (client-side)
+
+| File | Purpose |
+|------|---------|
+| oir_config.xml | 4 OIR rules binding change objects to lifecycles/workflows/templates |
+| business_rules.xml | CHANGEABLE_PRE_RELEASE rule set + 2 rules + 2 rule links |
+| team_config.txt | Documentation of team template structure |
+| deploy_preferences.bat | 8 windchill wt.pref.PrefCmd commands |
+| association_rules_spec.txt | Guide for manual association rule setup |
+| deploy_all.bat | Master deployment script (5 phases, --dry-run support, logging) |
+
+All generated in-browser by `generators.js` and downloadable as a ZIP via JSZip.
 
 ### YAML Config Schema
 
@@ -284,105 +347,31 @@ associations:
     enabled: false
 ```
 
-### Web UI (run.py)
-
-Single-file Python HTTP server on port 8050. Serves an inline HTML/CSS/JS application with:
-
-**9 Wizard Steps:**
-1. Company & Org
-2. Groups
-3. People
-4. Role Mapping (groups to roles - shows clickable chips)
-5. Preferences (toggle switches)
-6. Associations (enable/disable with cardinality)
-7. Validate (calls Python validator, shows errors/warnings)
-8. Generate (saves YAML + generates deployment artifacts)
-9. Post-Deployment Checklist (interactive, with best-practice panels)
-
-**API Endpoints (JSON over HTTP):**
-- POST /api/load - Load existing config
-- POST /api/save - Save YAML
-- POST /api/validate - Run validators
-- POST /api/generate - Generate all artifacts
-
-### Generated Artifacts
-
-| File | Purpose |
-|------|---------|
-| oir_config.xml | 4 OIR rules binding change objects to lifecycles/workflows/templates |
-| business_rules.xml | CHANGEABLE_PRE_RELEASE rule set + 2 rules + 2 rule links |
-| team_config.txt | Documentation of team template structure |
-| deploy_preferences.bat | 8 windchill wt.pref.PrefCmd commands |
-| association_rules_spec.txt | Guide for manual association rule setup |
-| deploy_all.bat | Master deployment script (5 phases, --dry-run support, logging) |
-
----
-
-## Current State and Known Issues
-
-### What Works
-- Python backend (loader, validator, generators) - solid and tested
-- CLI tools (show, validate, generate) - working
-- Web wizard steps 1-8 - functional
-- YAML config round-trips correctly
-- Generated .bat scripts use correct Windows Windchill commands
-- Validator accepts both group IDs and person IDs in role mappings
-
-### What Needs Fixing (Web UI)
-
-1. **Post-deployment checklist (Step 9) has rendering bugs**
-   - Best-practice expander panels (blue ? icons) may not render or expand correctly
-   - There's an error boundary (try-catch) that should show JS errors in red on the page
-   - The HTML is built with string concatenation in `renderChecklist()` - check browser console for errors
-   - Event delegation is used for expanders (`.bp-header`, `.cl-advanced-header`) and advanced checklist items (`[data-check]`)
-
-2. **The UI is a single 1100+ line file** with inline CSS and JS in `run.py`
-   - Should be split into: `index.html`, `style.css`, `app.js` (or a proper frontend framework)
-   - The Python server should serve static files + JSON API only
-
-3. **No download/export of generated files** via the web UI (files are saved to server filesystem only)
-
-### Recommended UI Improvements
-
-- Split `run.py` into separate HTML/CSS/JS + Python API server
-- Consider a lightweight framework (vanilla JS is fine, but use proper modules)
-- Add browser console error logging
-- Add a "Download All" button that zips generated artifacts
-- Make the checklist persistent (localStorage or save to server)
-- Add the ability to load an existing YAML and pre-fill all wizard steps
-- Consider making each checklist step collapsible for better scanning
-
 ---
 
 ## Development Notes
 
-### Running the Tool
+### Running the App
+
+No build step or server required. Just open `docs/index.html` in a browser:
+
 ```bash
-cd windchill-config-as-code
-python run.py
-# Opens browser to http://localhost:8050
+# Option 1: Direct file open
+open docs/index.html          # macOS
+start docs/index.html         # Windows
+
+# Option 2: Local server (if fetch() for configs needs HTTP)
+cd docs && python -m http.server 8050
 ```
 
-### CLI Alternative
-```bash
-python -m wc_config show -c configs/examples/acme_engineering.yaml
-python -m wc_config validate -c configs/examples/acme_engineering.yaml
-python -m wc_config generate -c configs/examples/acme_engineering.yaml -o generated/
-```
+The example config is embedded in `app.js` for `file://` compatibility, so no server is strictly required.
 
 ### Testing Changes
-- After editing run.py, restart the server (Ctrl+C, python run.py)
+
+- Edit JS/CSS/HTML files in `docs/`, refresh the browser
 - Browser F12 console shows JS errors
-- The Python backend validates on every generate call
+- Validation runs client-side on the Generate step
 
-### ASCII Requirement
-All Python output and generated files must be ASCII-only. No Unicode box-drawing characters, checkmarks, arrows, or em-dashes. The Windows console (cmd.exe) used on the Windchill server cannot render them.
+### ASCII Requirement for Generated Artifacts
 
-Check with:
-```python
-with open('file.py') as f:
-    for i, line in enumerate(f, 1):
-        for ch in line:
-            if ord(ch) > 127:
-                print(f'Line {i}: {repr(ch)}')
-```
+All generated deployment artifacts (.bat, .xml, .txt) must be ASCII-only. No Unicode box-drawing characters, checkmarks, arrows, or em-dashes. The Windows console (cmd.exe) on the Windchill server cannot render them. This constraint applies to `generators.js` output.

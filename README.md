@@ -12,103 +12,54 @@ Every Windchill implementation requires manually clicking through Policy Admin, 
 
 ## The Solution
 
+A browser-based wizard that walks you through configuration and generates ready-to-deploy artifacts:
+
 ```
-company_config.yaml  →  wc-config generate  →  deployment artifacts
-     (YAML)              (this tool)           (XML + shell scripts)
+YAML config  →  WCAI Wizard (browser)  →  deployment artifacts (ZIP download)
 ```
 
-You describe your org (people, groups, roles, preferences) in a single YAML file. The tool generates:
+You describe your org (people, groups, roles, preferences) in YAML. The tool generates:
 
 | File | What it does |
 |------|-------------|
-| `oir_config.xml` | Object Initialization Rules — binds change objects to lifecycles, workflows, team templates |
+| `oir_config.xml` | Object Initialization Rules -- binds change objects to lifecycles, workflows, team templates |
 | `business_rules.xml` | Business rules, rule sets, and rule links for pre-release validation |
-| `team_config.txt` | Team template spec with role-to-person mappings |
-| `deploy_preferences.sh` | Sets all change management preferences via `wt.pref.PrefCmd` |
+| `team_config.txt` | Team template spec with role-to-group mappings |
+| `deploy_preferences.bat` | Sets all change management preferences via `wt.pref.PrefCmd` |
 | `association_rules_spec.txt` | Target configuration for change object associations |
-| `deploy_all.sh` | Master script that orchestrates everything in the correct order |
+| `deploy_all.bat` | Master script that orchestrates everything in the correct order |
 
 ## Quick Start
 
-```bash
-# Install
-pip install -e .
-
-# Option 1: Interactive wizard (walks you through everything)
-wc-config wizard
-
-# Option 2: Edit YAML directly (copy the example)
-cp configs/examples/acme_engineering.yaml company_config.yaml
-# ... edit to match your company ...
-
-# Validate your config
-wc-config validate -c company_config.yaml
-
-# Generate deployment artifacts
-wc-config generate -c company_config.yaml -o generated/
-
-# Preview what would happen
-cd generated/
-bash deploy_all.sh --dry-run
-
-# Deploy for real (on Windchill server)
-source $WT_HOME/bin/adminTools/windchillenv.sh
-bash deploy_all.sh
-```
-
-## CLI Commands
-
-### `wc-config wizard`
-Interactive step-by-step setup. Walks you through:
-1. Company & organization details
-2. Groups / departments
-3. People (name, username, group)
-4. Role mapping (who does what in the change process)
-5. Change management preferences
-6. Association rules (which change objects link together)
-
-Saves a complete YAML config file.
+No install required. Just open the wizard in your browser:
 
 ```bash
-wc-config wizard                          # creates company_config.yaml
-wc-config wizard -o my_company.yaml       # custom output path
-wc-config wizard -c existing.yaml         # resume/edit existing config
+# Option 1: Open directly (works with file://)
+open docs/index.html          # macOS
+start docs/index.html         # Windows
+
+# Option 2: Local server
+cd docs && python -m http.server 8050
+# Then open http://localhost:8050
 ```
 
-### `wc-config validate`
-Checks your YAML for errors, warnings, and best-practice issues.
+The wizard has two modes (tab switcher in the sidebar):
 
-```bash
-wc-config validate -c company_config.yaml
-```
+1. **Teams & Participants** -- Guided checklist for org setup, users, license groups, groups, team templates, and context teams
+2. **Change Management** -- 9-step wizard for config, validation, artifact generation, and post-deployment checklist
 
-Validates:
-- Required fields (company name, org, usernames)
-- No duplicate IDs
-- All role assignments reference real people
-- Preference values are valid
-- Association rules are logically consistent
-- Critical roles have at least one person assigned
+### Typical workflow
 
-### `wc-config generate`
-Produces all deployment artifacts from your config.
-
-```bash
-wc-config generate -c company_config.yaml              # output to generated/
-wc-config generate -c company_config.yaml -o deploy/    # custom output dir
-wc-config generate -c company_config.yaml --force       # skip validation
-```
-
-### `wc-config show`
-Displays a formatted summary of your config.
-
-```bash
-wc-config show -c company_config.yaml
-```
+1. Click **Load Example (Acme)** to see a sample config
+2. Edit each step to match your company
+3. Click **Validate** to check for errors
+4. Click **Generate** to create deployment artifacts
+5. Download the ZIP and deploy to your Windchill server
+6. Follow the **Post-Deployment Checklist** for manual steps
 
 ## YAML Config Structure
 
-See `configs/examples/acme_engineering.yaml` for a fully commented example.
+See `docs/configs/acme_engineering.yaml` for a fully commented example.
 
 ```yaml
 company:
@@ -131,73 +82,59 @@ people:
     group: eng
 
 roles:
-  change_admin_1: [jsmith]
-  change_admin_2: [tpatel]
-  # ... see model.py for all 9 roles
+  change_admin_1: [eng]
+  change_admin_2: [mgmt]
+  # ... see model.js for all 9 roles
 
 preferences:
   cn_without_cr: "No"
   sequenced_plan: "Yes"
-  # ... see model.py for all 8 preferences
+  # ... see model.js for all 8 preferences
 
 associations:
   pr_to_cr:
     enabled: true
     cardinality: "many:1"
-  # ... see model.py for all 4 association types
+  # ... see model.js for all 4 association types
 ```
 
 ## Windchill Deployment
 
-The generated `deploy_all.sh` runs 5 phases:
+The generated `deploy_all.bat` runs 5 phases:
 
-1. **OIR** — `LoadFromFile` loads object initialization rules
-2. **Business Rules** — `LoadFromFile` loads rules, sets, and links
-3. **Preferences** — `PrefCmd` sets and locks all preferences
-4. **Association Rules** — Outputs spec for manual UI configuration
-5. **Validation** — Verifies OIR bindings loaded correctly
+1. **OIR** -- `LoadFromFile` loads object initialization rules
+2. **Business Rules** -- `LoadFromFile` loads rules, sets, and links
+3. **Preferences** -- `PrefCmd` sets and locks all preferences
+4. **Association Rules** -- Outputs spec for manual UI configuration
+5. **Validation** -- Verifies OIR bindings loaded correctly
 
 ### What's still manual?
-- **Team templates** — Created via Windchill UI (the spec file tells you exactly what to create)
-- **Context team assignments** — Done per Product/Library in the UI
-- **Association rules** — Created via Site/Org → Utilities → Business Rules
-- **Access control policies** — Defined per lifecycle state in Policy Admin
 
-These are documented in the generated spec files so nothing gets missed.
+- **Team templates** -- Populated via Windchill UI (the spec file tells you exactly what to configure)
+- **Context team assignments** -- Done per Product/Library in the UI
+- **Association rules** -- Created via Site/Org -> Utilities -> Business Rules
+- **Access control policies** -- Defined per lifecycle state in Policy Admin
 
-## Git Workflow
-
-```
-my-windchill-config/
-├── company_config.yaml          ← version-controlled source of truth
-├── generated/                   ← gitignored, regenerated on demand
-│   ├── deploy_all.sh
-│   ├── oir_config.xml
-│   └── ...
-├── configs/
-│   └── examples/
-│       └── acme_engineering.yaml
-└── .gitignore
-```
-
-Suggested `.gitignore`:
-```
-generated/
-*.pyc
-__pycache__/
-*.egg-info/
-```
+These are documented in the generated spec files and the post-deployment checklist so nothing gets missed.
 
 ## Architecture
 
 ```
-wc_config/
-├── model.py        # Canonical Windchill data model (roles, objects, prefs)
-├── loader.py       # YAML parser with defaults and normalization
-├── validators.py   # Config validation with actionable error messages
-├── generators.py   # XML and shell script generators
-├── wizard.py       # Interactive terminal wizard
-└── cli.py          # CLI entry point (argparse)
+docs/
+  index.html              # Single-page app shell
+  css/style.css           # All styles
+  js/
+    model.js              # Windchill data model (roles, objects, prefs)
+    loader.js             # YAML parser with defaults and normalization
+    validators.js         # Config validation with actionable error messages
+    generators.js         # XML and .bat script generators (in-browser)
+    teams-model.js        # Teams & Participants wizard model
+    teams-validators.js   # Teams & Participants validation
+    teams-app.js          # Teams & Participants wizard UI
+    app.js                # Main application (wizard, state, rendering)
+  configs/
+    acme_engineering.yaml # Example config
+    company_config.yaml   # Minimal example config
 ```
 
-The model is the single source of truth for what Windchill expects. The YAML maps onto it. The generators transform it into deployment artifacts. The validator ensures consistency before you deploy.
+Static vanilla JS -- no build step, no framework, no server required. Uses js-yaml and JSZip from CDN.

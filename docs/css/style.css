@@ -262,6 +262,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .ref-mistakes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ref-mistake-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px 16px; }
 
+/* Section title (used on Access Control page) */
+.ref-section-title { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 12px; }
+
+/* Rule components (5-step vertical list) */
+.ref-rule-components { display: flex; flex-direction: column; gap: 10px; }
+.ref-rule-comp { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; }
+.ref-rule-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 700; color: #0f172a; flex-shrink: 0; }
+
 /* Responsive: stack on narrow screens */
 @media (max-width: 860px) {
   .ref-concepts { grid-template-columns: 1fr; }

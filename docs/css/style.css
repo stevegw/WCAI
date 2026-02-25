@@ -206,3 +206,64 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .cl-progress-bar { flex: 1; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
 .cl-progress-fill { height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 4px; transition: width 0.3s; }
 .cl-progress-text { font-size: 13px; font-weight: 700; color: #22c55e; min-width: 45px; text-align: right; }
+
+/* ============================================================
+   Reference Tab Styles
+   ============================================================ */
+
+/* Concept cards grid */
+.ref-concepts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 8px; }
+.ref-concept-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; border-top: 3px solid #334155; }
+.ref-concept-card ul { margin: 8px 0 4px 16px; font-size: 11.5px; color: #94a3b8; line-height: 1.7; }
+.ref-border-blue { border-top-color: #4ea8de; }
+.ref-border-orange { border-top-color: #f4a261; }
+.ref-border-green { border-top-color: #7ec98f; }
+.ref-border-purple { border-top-color: #c084fc; }
+
+/* Semantic color tags */
+.ref-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.ref-tag.blue { background: rgba(78, 168, 222, 0.15); color: #4ea8de; }
+.ref-tag.orange { background: rgba(244, 162, 97, 0.15); color: #f4a261; }
+.ref-tag.green { background: rgba(126, 201, 143, 0.15); color: #7ec98f; }
+.ref-tag.purple { background: rgba(192, 132, 252, 0.15); color: #c084fc; }
+
+/* SVG diagram container */
+.ref-diagram { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; overflow: hidden; }
+
+/* Insight callout */
+.ref-insight { padding: 16px; background: rgba(192, 132, 252, 0.04); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 8px; margin: 16px 0; }
+
+/* Scenario tab switcher */
+.ref-flow-tabs { display: flex; gap: 4px; margin-bottom: 0; border-bottom: 1px solid #334155; padding-bottom: 0; }
+.ref-flow-tab { padding: 10px 16px; border: none; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.ref-flow-tab:hover { color: #94a3b8; }
+.ref-flow-tab.active { color: #c084fc; border-bottom-color: #c084fc; }
+.ref-flow-panels { background: #1e293b; border: 1px solid #334155; border-top: none; border-radius: 0 0 8px 8px; }
+.ref-flow-panel { display: none; padding: 20px; }
+.ref-flow-panel.active { display: block; }
+
+/* Scenario steps */
+.ref-scenario-steps { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.ref-scenario-step { display: flex; align-items: flex-start; gap: 10px; }
+.ref-step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700; flex-shrink: 0; color: #0f172a; }
+.ref-bg-blue { background: #4ea8de; }
+.ref-bg-orange { background: #f4a261; }
+.ref-bg-green { background: #7ec98f; }
+.ref-bg-purple { background: #c084fc; }
+.ref-scenario-fix { margin-top: 12px; padding: 10px 14px; background: rgba(34, 197, 94, 0.06); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px; font-size: 12px; color: #94a3b8; line-height: 1.6; }
+
+/* Cheat sheet table */
+.ref-cheat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ref-cheat-table th { text-align: left; padding: 10px 12px; background: #1e293b; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+.ref-cheat-table td { padding: 10px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+.ref-cheat-table tr:hover td { background: rgba(148, 163, 184, 0.04); }
+
+/* Misconception cards */
+.ref-mistakes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ref-mistake-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px 16px; }
+
+/* Responsive: stack on narrow screens */
+@media (max-width: 860px) {
+  .ref-concepts { grid-template-columns: 1fr; }
+  .ref-mistakes-grid { grid-template-columns: 1fr; }
+}

@@ -26,11 +26,14 @@
   var generatedFiles = null; // cached after generate
 
   // Teams & Participants wizard state
-  var currentWizard = "teams"; // "teams" | "change"
+  var currentWizard = "teams"; // "teams" | "change" | "reference"
   var teamsConfig = null;
   var teamsStep = 0;
   var teamsChecklistState = {};
   var teamsOpenSections = {};
+
+  // Reference wizard state
+  var referenceStep = 0;
 
   var STORAGE_KEY_CONFIG = "wcai_config";
   var STORAGE_KEY_CHECKLIST = "wcai_checklist";
@@ -41,6 +44,7 @@
   var STORAGE_KEY_TEAMS_CHECKLIST = "wcai_teams_checklist";
   var STORAGE_KEY_TEAMS_SECTIONS = "wcai_teams_sections";
   var STORAGE_KEY_TEAMS_STEP = "wcai_teams_step";
+  var STORAGE_KEY_REF_STEP = "wcai_ref_step";
 
   var STEPS = [
     { id: "company", label: "Company & Org" },
@@ -68,6 +72,7 @@
       localStorage.setItem(STORAGE_KEY_TEAMS_CHECKLIST, JSON.stringify(teamsChecklistState));
       localStorage.setItem(STORAGE_KEY_TEAMS_SECTIONS, JSON.stringify(teamsOpenSections));
       localStorage.setItem(STORAGE_KEY_TEAMS_STEP, String(teamsStep));
+      localStorage.setItem(STORAGE_KEY_REF_STEP, String(referenceStep));
     } catch (e) { /* quota exceeded or unavailable */ }
   }
 
@@ -118,7 +123,7 @@
   function loadWizardFromStorage() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY_WIZARD);
-      if (raw === 'teams' || raw === 'change') currentWizard = raw;
+      if (raw === 'teams' || raw === 'change' || raw === 'reference') currentWizard = raw;
     } catch (e) { /* ignore */ }
   }
 
@@ -129,6 +134,18 @@
         var step = parseInt(raw, 10);
         var ta = WCAI.teamsApp;
         if (!isNaN(step) && ta && step >= 0 && step < ta.STEPS_TEAMS.length) return step;
+      }
+    } catch (e) { /* ignore */ }
+    return 0;
+  }
+
+  function loadRefStepFromStorage() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY_REF_STEP);
+      if (raw) {
+        var step = parseInt(raw, 10);
+        var ra = WCAI.referenceApp;
+        if (!isNaN(step) && ra && step >= 0 && step < ra.STEPS_REFERENCE.length) return step;
       }
     } catch (e) { /* ignore */ }
     return 0;
@@ -168,11 +185,14 @@
     loadWizardFromStorage();
     currentStep = loadStepFromStorage();
     teamsStep = loadTeamsStepFromStorage();
+    referenceStep = loadRefStepFromStorage();
 
     renderTabs();
     renderNav();
     if (currentWizard === 'teams') {
       WCAI.teamsApp.render(teamsStep);
+    } else if (currentWizard === 'reference') {
+      WCAI.referenceApp.render(referenceStep);
     } else {
       var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
       changeRenderers[currentStep]();
@@ -193,7 +213,7 @@
           '<button class="btn btn-secondary" onclick="WCAI.app.goToStep(0)" style="padding:12px 24px;font-size:14px;">Start from Scratch</button>' +
         '</div>' +
         // Two wizard entry point cards
-        '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">' +
+        '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">' +
           '<div style="padding:20px;background:#1e293b;border:1px solid rgba(34,197,94,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'teams\')">' +
             '<div style="font-size:15px;font-weight:700;color:#22c55e;margin-bottom:6px;">1. Teams & Participants</div>' +
             '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Set up the foundation: organization, users, groups, licenses, context teams, and access control. <strong>Do this first.</strong></div>' +
@@ -203,6 +223,11 @@
             '<div style="font-size:15px;font-weight:700;color:#60a5fa;margin-bottom:6px;">2. Change Management</div>' +
             '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Configure the change process: OIR, business rules, preferences, associations, and deployment artifacts.</div>' +
             '<div style="margin-top:10px;font-size:11px;color:#64748b;">9 steps -- Company, Groups, People, Roles, Preferences, Associations, Validate, Generate, Checklist</div>' +
+          '</div>' +
+          '<div style="padding:20px;background:#1e293b;border:1px solid rgba(192,132,252,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'reference\')">' +
+            '<div style="font-size:15px;font-weight:700;color:#c084fc;margin-bottom:6px;">Reference</div>' +
+            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Learn how Windchill\'s access model works: contexts, roles, content groups, and access control policies.</div>' +
+            '<div style="margin-top:10px;font-size:11px;color:#64748b;">Interactive scenarios, cheat sheet, and common misconceptions</div>' +
           '</div>' +
         '</div>' +
         // Feature cards
@@ -233,8 +258,8 @@
   // ============================================================
   function renderNav() {
     var nav = document.getElementById("nav");
-    var steps = currentWizard === 'teams' ? WCAI.teamsApp.STEPS_TEAMS : STEPS;
-    var activeStep = currentWizard === 'teams' ? teamsStep : currentStep;
+    var steps = currentWizard === 'teams' ? WCAI.teamsApp.STEPS_TEAMS : currentWizard === 'reference' ? WCAI.referenceApp.STEPS_REFERENCE : STEPS;
+    var activeStep = currentWizard === 'teams' ? teamsStep : currentWizard === 'reference' ? referenceStep : currentStep;
     var html = "";
     for (var i = 0; i < steps.length; i++) {
       var s = steps[i];
@@ -251,8 +276,9 @@
     var tabs = document.getElementById('wizard-tabs');
     if (!tabs) return;
     var buttons = tabs.getElementsByClassName('sb-tab');
+    var wizardMap = ['teams', 'change', 'reference'];
     for (var i = 0; i < buttons.length; i++) {
-      var wiz = i === 0 ? 'teams' : 'change';
+      var wiz = wizardMap[i] || '';
       if (wiz === currentWizard) buttons[i].classList.add('active');
       else buttons[i].classList.remove('active');
     }
@@ -265,6 +291,8 @@
     renderNav();
     if (wizard === 'teams') {
       WCAI.teamsApp.render(teamsStep);
+    } else if (wizard === 'reference') {
+      WCAI.referenceApp.render(referenceStep);
     } else {
       var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
       changeRenderers[currentStep]();
@@ -277,6 +305,11 @@
       saveToStorage();
       renderNav();
       WCAI.teamsApp.render(i);
+    } else if (currentWizard === 'reference') {
+      referenceStep = i;
+      saveToStorage();
+      renderNav();
+      WCAI.referenceApp.render(i);
     } else {
       currentStep = i;
       saveToStorage();
@@ -300,6 +333,8 @@
     saveToStorage();
     if (currentWizard === 'teams') {
       goToStep(teamsStep + 1);
+    } else if (currentWizard === 'reference') {
+      goToStep(referenceStep + 1);
     } else {
       goToStep(currentStep + 1);
     }
@@ -555,6 +590,7 @@
     localStorage.removeItem(STORAGE_KEY_TEAMS_CHECKLIST);
     localStorage.removeItem(STORAGE_KEY_TEAMS_SECTIONS);
     localStorage.removeItem(STORAGE_KEY_TEAMS_STEP);
+    localStorage.removeItem(STORAGE_KEY_REF_STEP);
     config = loader.getDefaultConfig();
     teamsConfig = WCAI.teamsModel.getDefaultTeamsConfig();
     checklistState = {};
@@ -565,6 +601,7 @@
     currentWizard = "teams";
     teamsStep = 0;
     currentStep = 0;
+    referenceStep = 0;
     renderTabs();
     goToStep(0);
   }
@@ -1408,6 +1445,7 @@
   function _getConfig() { return config; }
   function _getTeamsConfig() { return teamsConfig; }
   function _getTeamsStep() { return teamsStep; }
+  function _getRefStep() { return referenceStep; }
   function _getTeamsChecklistState() { return teamsChecklistState; }
   function _getTeamsOpenSections() { return teamsOpenSections; }
   function _saveConfig() { saveToStorage(); }
@@ -1456,6 +1494,7 @@
     _getConfig: _getConfig,
     _getTeamsConfig: _getTeamsConfig,
     _getTeamsStep: _getTeamsStep,
+    _getRefStep: _getRefStep,
     _getTeamsChecklistState: _getTeamsChecklistState,
     _getTeamsOpenSections: _getTeamsOpenSections,
     _saveConfig: _saveConfig,

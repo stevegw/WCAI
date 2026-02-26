@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +7,24 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<!-- Mobile hamburger -->
+<button class="mobile-menu-btn" onclick="WCAI.app.openMobileSidebar()">&#9776;</button>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="WCAI.app.closeMobileSidebar()"></div>
+
 <div class="app">
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sb-logo">
-      <h2>WCAI</h2>
-      <p>Windchill Config AI</p>
+      <div class="sb-logo-text">
+        <h2>WCAI</h2>
+        <p>Windchill Config AI</p>
+      </div>
+      <button class="theme-toggle" onclick="WCAI.app.toggleTheme()" title="Toggle dark/light mode" id="theme-toggle-btn">&#9790;</button>
     </div>
+    <button class="sb-collapse-btn" onclick="WCAI.app.toggleSidebar()" id="sb-collapse-btn">&#9776;</button>
     <div class="sb-tabs" id="wizard-tabs">
       <button class="sb-tab active" onclick="WCAI.app.switchWizard('teams')">Teams</button>
       <button class="sb-tab" onclick="WCAI.app.switchWizard('change')">Change Mgmt</button>
@@ -39,6 +50,19 @@
   <div class="main" id="main"></div>
 </div>
 
+<!-- Notepad FAB + Panel -->
+<button class="notepad-fab" id="notepad-fab" onclick="WCAI.notepad.toggle()" title="Open notepad">&#9998;</button>
+<div class="notepad-panel" id="notepad-panel">
+  <div class="notepad-header">
+    <h3>Notepad</h3>
+    <div class="notepad-meta">
+      <span class="notepad-count" id="notepad-count">0 chars</span>
+      <button class="notepad-close" onclick="WCAI.notepad.close()" title="Close">X</button>
+    </div>
+  </div>
+  <textarea class="notepad-textarea" id="notepad-textarea" placeholder="Jot down notes, navigation paths, reminders..."></textarea>
+</div>
+
 <!-- CDN Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -52,6 +76,8 @@
 <script src="js/teams-validators.js"></script>
 <script src="js/teams-app.js"></script>
 <script src="js/reference-app.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/notepad.js"></script>
 <script src="js/app.js"></script>
 
 <!-- Boot -->

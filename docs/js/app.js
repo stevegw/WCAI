@@ -152,9 +152,71 @@
   }
 
   // ============================================================
+  // Theme
+  // ============================================================
+  var STORAGE_KEY_THEME = "wcai_theme";
+
+  function initTheme() {
+    var saved;
+    try { saved = localStorage.getItem(STORAGE_KEY_THEME); } catch (e) {}
+    var theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeIcon(theme);
+  }
+
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem(STORAGE_KEY_THEME, next); } catch (e) {}
+    updateThemeIcon(next);
+  }
+
+  function updateThemeIcon(theme) {
+    var btn = document.getElementById('theme-toggle-btn');
+    if (btn) btn.innerHTML = theme === 'dark' ? '&#9790;' : '&#9728;';
+  }
+
+  // ============================================================
+  // Sidebar
+  // ============================================================
+  var STORAGE_KEY_SIDEBAR = "wcai_sidebar";
+
+  function initSidebar() {
+    var saved;
+    try { saved = localStorage.getItem(STORAGE_KEY_SIDEBAR); } catch (e) {}
+    if (saved === 'collapsed' && !isMobile()) {
+      document.querySelector('.app').classList.add('sidebar-collapsed');
+    }
+  }
+
+  function toggleSidebar() {
+    var app = document.querySelector('.app');
+    app.classList.toggle('sidebar-collapsed');
+    var collapsed = app.classList.contains('sidebar-collapsed');
+    try { localStorage.setItem(STORAGE_KEY_SIDEBAR, collapsed ? 'collapsed' : 'expanded'); } catch (e) {}
+  }
+
+  function openMobileSidebar() {
+    document.getElementById('sidebar').classList.add('mobile-open');
+    document.getElementById('sidebar-overlay').classList.add('active');
+  }
+
+  function closeMobileSidebar() {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+  }
+
+  function isMobile() {
+    return window.innerWidth <= 768;
+  }
+
+  // ============================================================
   // Init
   // ============================================================
   function init() {
+    initTheme();
+    initSidebar();
     model = m.getModelMetadata();
 
     if (!loadFromStorage()) {
@@ -179,6 +241,8 @@
           })
           .catch(function () { /* no saved config -- keep blank default */ });
       }
+      if (WCAI.speech) WCAI.speech.init();
+      if (WCAI.notepad) WCAI.notepad.init();
       return;
     }
     loadChecklistFromStorage();
@@ -197,16 +261,18 @@
       var changeRenderers = [renderCompany, renderGroups, renderPeople, renderRoles, renderPrefs, renderAssoc, renderValidate, renderGenerate, renderChecklist];
       changeRenderers[currentStep]();
     }
+    if (WCAI.speech) WCAI.speech.init();
+    if (WCAI.notepad) WCAI.notepad.init();
   }
 
   function renderWelcome() {
     var html =
       '<div style="max-width:660px;margin:40px auto 0;text-align:center;">' +
-        '<h1 style="font-size:28px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Welcome to WCAI</h1>' +
-        '<p style="font-size:14px;color:#94a3b8;margin-bottom:32px;line-height:1.7;">Windchill Config AI helps you set up Teams & Participants and configure Change Management for PTC Windchill -- interactively, step by step.</p>' +
+        '<h1 style="font-size:28px;font-weight:700;color:var(--c-text-primary);margin-bottom:8px;">Welcome to WCAI</h1>' +
+        '<p style="font-size:14px;color:var(--c-text-muted);margin-bottom:32px;line-height:1.7;">Windchill Config AI helps you set up Teams & Participants and configure Change Management for PTC Windchill -- interactively, step by step.</p>' +
         '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;">' +
           '<button class="btn btn-primary" onclick="WCAI.app.loadExample()" style="padding:12px 24px;font-size:14px;">Load Example (Acme)</button>' +
-          '<label style="display:inline-block;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;background:#334155;color:#e2e8f0;transition:all 0.15s;">' +
+          '<label style="display:inline-block;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;background:var(--c-border);color:var(--c-text);transition:all 0.15s;">' +
             'Upload Your YAML' +
             '<input type="file" accept=".yaml,.yml" style="display:none;" onchange="if(this.files[0]) WCAI.app.uploadYaml(this.files[0])">' +
           '</label>' +
@@ -214,39 +280,39 @@
         '</div>' +
         // Two wizard entry point cards
         '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">' +
-          '<div style="padding:20px;background:#1e293b;border:1px solid rgba(34,197,94,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'teams\')">' +
-            '<div style="font-size:15px;font-weight:700;color:#22c55e;margin-bottom:6px;">1. Teams & Participants</div>' +
-            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Set up the foundation: organization, users, groups, licenses, context teams, and access control. <strong>Do this first.</strong></div>' +
-            '<div style="margin-top:10px;font-size:11px;color:#64748b;">7 steps -- Org, Directory, Users, Groups, Licenses, Teams, Checklist</div>' +
+          '<div style="padding:20px;background:var(--c-bg-surface);border:1px solid var(--c-accent-030);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'teams\')">' +
+            '<div style="font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:6px;">1. Teams & Participants</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.6;">Set up the foundation: organization, users, groups, licenses, context teams, and access control. <strong>Do this first.</strong></div>' +
+            '<div style="margin-top:10px;font-size:11px;color:var(--c-text-dim);">7 steps -- Org, Directory, Users, Groups, Licenses, Teams, Checklist</div>' +
           '</div>' +
-          '<div style="padding:20px;background:#1e293b;border:1px solid #334155;border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'change\')">' +
-            '<div style="font-size:15px;font-weight:700;color:#60a5fa;margin-bottom:6px;">2. Change Management</div>' +
-            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Configure the change process: OIR, business rules, preferences, associations, and deployment artifacts.</div>' +
-            '<div style="margin-top:10px;font-size:11px;color:#64748b;">9 steps -- Company, Groups, People, Roles, Preferences, Associations, Validate, Generate, Checklist</div>' +
+          '<div style="padding:20px;background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'change\')">' +
+            '<div style="font-size:15px;font-weight:700;color:var(--c-info-light);margin-bottom:6px;">2. Change Management</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.6;">Configure the change process: OIR, business rules, preferences, associations, and deployment artifacts.</div>' +
+            '<div style="margin-top:10px;font-size:11px;color:var(--c-text-dim);">9 steps -- Company, Groups, People, Roles, Preferences, Associations, Validate, Generate, Checklist</div>' +
           '</div>' +
-          '<div style="padding:20px;background:#1e293b;border:1px solid rgba(192,132,252,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'reference\')">' +
-            '<div style="font-size:15px;font-weight:700;color:#c084fc;margin-bottom:6px;">Reference</div>' +
-            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Access model, access control policies, multi-BU implementation planning, and bulk user loading for dev VMs.</div>' +
-            '<div style="margin-top:10px;font-size:11px;color:#64748b;">4 pages -- Access Model, Access Control, Implementation Planning, Bulk User Loading</div>' +
+          '<div style="padding:20px;background:var(--c-bg-surface);border:1px solid var(--c-purple-020);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'reference\')">' +
+            '<div style="font-size:15px;font-weight:700;color:var(--c-ref-purple);margin-bottom:6px;">Reference</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.6;">Access model, access control policies, multi-BU implementation planning, and bulk user loading for dev VMs.</div>' +
+            '<div style="margin-top:10px;font-size:11px;color:var(--c-text-dim);">4 pages -- Access Model, Access Control, Implementation Planning, Bulk User Loading</div>' +
           '</div>' +
         '</div>' +
         // Feature cards
         '<div style="text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;">' +
-          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Two Guided Wizards</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Teams & Participants (7 steps) and Change Management (9 steps) with best-practice guidance throughout.</div>' +
+          '<div style="padding:16px;background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--c-accent);margin-bottom:4px;">Two Guided Wizards</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);">Teams & Participants (7 steps) and Change Management (9 steps) with best-practice guidance throughout.</div>' +
           '</div>' +
-          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Deployment Artifacts</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Generates OIR XML, business rules, preference scripts, and deployment batch files ready for your Windchill server.</div>' +
+          '<div style="padding:16px;background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--c-accent);margin-bottom:4px;">Deployment Artifacts</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);">Generates OIR XML, business rules, preference scripts, and deployment batch files ready for your Windchill server.</div>' +
           '</div>' +
-          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">Interactive Checklists</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Post-deployment checklists with exact Windchill navigation paths and PTC best-practice guidance.</div>' +
+          '<div style="padding:16px;background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--c-accent);margin-bottom:4px;">Interactive Checklists</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);">Post-deployment checklists with exact Windchill navigation paths and PTC best-practice guidance.</div>' +
           '</div>' +
-          '<div style="padding:16px;background:#1e293b;border:1px solid #334155;border-radius:8px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#22c55e;margin-bottom:4px;">No Server Required</div>' +
-            '<div style="font-size:12px;color:#94a3b8;">Runs entirely in your browser. Your config is saved locally and never leaves your machine.</div>' +
+          '<div style="padding:16px;background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--c-accent);margin-bottom:4px;">No Server Required</div>' +
+            '<div style="font-size:12px;color:var(--c-text-muted);">Runs entirely in your browser. Your config is saved locally and never leaves your machine.</div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -264,7 +330,7 @@
     for (var i = 0; i < steps.length; i++) {
       var s = steps[i];
       html += '<li id="nav-' + i + '" onclick="WCAI.app.goToStep(' + i + ')" class="' + (i === activeStep ? 'active' : '') + '">' +
-        '<span class="num">' + (i + 1) + '</span> ' + s.label + '</li>';
+        '<span class="num">' + (i + 1) + '</span> <span class="nav-label">' + s.label + '</span></li>';
     }
     nav.innerHTML = html;
 
@@ -285,6 +351,8 @@
   }
 
   function switchWizard(wizard) {
+    if (WCAI.speech) WCAI.speech.stop();
+    closeMobileSidebar();
     currentWizard = wizard;
     saveToStorage();
     renderTabs();
@@ -300,6 +368,8 @@
   }
 
   function goToStep(i) {
+    if (WCAI.speech) WCAI.speech.stop();
+    closeMobileSidebar();
     if (currentWizard === 'teams') {
       teamsStep = i;
       saveToStorage();
@@ -607,6 +677,9 @@
     localStorage.removeItem(STORAGE_KEY_TEAMS_SECTIONS);
     localStorage.removeItem(STORAGE_KEY_TEAMS_STEP);
     localStorage.removeItem(STORAGE_KEY_REF_STEP);
+    localStorage.removeItem(STORAGE_KEY_THEME);
+    localStorage.removeItem(STORAGE_KEY_SIDEBAR);
+    if (WCAI.notepad) WCAI.notepad.clearNotes();
     config = loader.getDefaultConfig();
     teamsConfig = WCAI.teamsModel.getDefaultTeamsConfig();
     checklistState = {};
@@ -618,6 +691,9 @@
     teamsStep = 0;
     currentStep = 0;
     referenceStep = 0;
+    document.documentElement.setAttribute('data-theme', 'dark');
+    updateThemeIcon('dark');
+    document.querySelector('.app').classList.remove('sidebar-collapsed');
     renderTabs();
     goToStep(0);
   }
@@ -803,7 +879,7 @@
           }
         }
         if (memberParts.length > 0) {
-          html += '<div style="margin-top:8px;font-size:11px;color:#64748b;">Members: ' + memberParts.join(' | ') + '</div>';
+          html += '<div style="margin-top:8px;font-size:11px;color:var(--c-text-dim);">Members: ' + memberParts.join(' | ') + '</div>';
         }
       }
       html += '</div>';
@@ -857,7 +933,7 @@
       var a = model.associations[ak];
       var ua = config.associations[ak] || {};
       var enabled = ua.enabled !== false;
-      var tag = a.standard ? '' : ' <span style="color:#f59e0b;font-size:10px;font-weight:700">NON-STANDARD</span>';
+      var tag = a.standard ? '' : ' <span style="color:var(--c-warning);font-size:10px;font-weight:700">NON-STANDARD</span>';
       html += '<div class="toggle-row">' +
         '<div class="toggle-info">' +
           '<div class="name">' + esc(a.role_a) + ' <span class="assoc-arrow">-></span> ' + esc(a.role_b) + tag + '</div>' +
@@ -966,28 +1042,28 @@
 
     // Explain what gets generated before the button
     html += '<div style="margin-bottom:24px;">';
-    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:rgba(34,197,94,0.2);">' +
+    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:var(--c-accent-020);">' +
       '<div class="toggle-info">' +
-        '<div class="name" style="color:#22c55e;">Automated (loaded via Windchill CLI)</div>' +
+        '<div class="name" style="color:var(--c-accent);">Automated (loaded via Windchill CLI)</div>' +
         '<div class="desc">These files are loaded into Windchill using command-line tools from a Windchill shell. The deploy_all.bat script handles all three.</div>' +
       '</div></div>';
 
-    html += '<div style="padding:0 8px;font-size:12px;color:#94a3b8;margin-bottom:16px;">' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">oir_config.xml</strong> -- ' + FILE_INFO['oir_config.xml'].desc + '</p>' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">business_rules.xml</strong> -- ' + FILE_INFO['business_rules.xml'].desc + '</p>' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">deploy_preferences.bat</strong> -- ' + FILE_INFO['deploy_preferences.bat'].desc + '</p>' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">deploy_all.bat</strong> -- ' + FILE_INFO['deploy_all.bat'].desc + '</p>' +
+    html += '<div style="padding:0 8px;font-size:12px;color:var(--c-text-muted);margin-bottom:16px;">' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">oir_config.xml</strong> -- ' + FILE_INFO['oir_config.xml'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">business_rules.xml</strong> -- ' + FILE_INFO['business_rules.xml'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">deploy_preferences.bat</strong> -- ' + FILE_INFO['deploy_preferences.bat'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">deploy_all.bat</strong> -- ' + FILE_INFO['deploy_all.bat'].desc + '</p>' +
     '</div>';
 
-    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:rgba(245,158,11,0.2);">' +
+    html += '<div class="toggle-row" style="margin-bottom:12px;border-color:var(--c-warning-020);">' +
       '<div class="toggle-info">' +
-        '<div class="name" style="color:#f59e0b;">Reference (manual steps in Windchill UI)</div>' +
+        '<div class="name" style="color:var(--c-warning);">Reference (manual steps in Windchill UI)</div>' +
         '<div class="desc">These are human-readable guides for steps that cannot be automated. Follow them when configuring teams and association rules in the Windchill web interface.</div>' +
       '</div></div>';
 
-    html += '<div style="padding:0 8px;font-size:12px;color:#94a3b8;margin-bottom:16px;">' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">team_config.txt</strong> -- ' + FILE_INFO['team_config.txt'].desc + '</p>' +
-      '<p style="margin-bottom:6px;"><strong style="color:#e2e8f0;">association_rules_spec.txt</strong> -- ' + FILE_INFO['association_rules_spec.txt'].desc + '</p>' +
+    html += '<div style="padding:0 8px;font-size:12px;color:var(--c-text-muted);margin-bottom:16px;">' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">team_config.txt</strong> -- ' + FILE_INFO['team_config.txt'].desc + '</p>' +
+      '<p style="margin-bottom:6px;"><strong style="color:var(--c-text);">association_rules_spec.txt</strong> -- ' + FILE_INFO['association_rules_spec.txt'].desc + '</p>' +
     '</div>';
     html += '</div>';
 
@@ -1041,9 +1117,9 @@
           '</div>';
 
         if (info) {
-          html += '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">' +
+          html += '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.6;">' +
             '<p style="margin-bottom:4px;">' + info.desc + '</p>' +
-            '<p style="color:#64748b;"><strong>How to use:</strong> ' + info.how + '</p>' +
+            '<p style="color:var(--c-text-dim);"><strong>How to use:</strong> ' + info.how + '</p>' +
           '</div>';
         }
         html += '</div>';
@@ -1057,7 +1133,7 @@
           '<p>3. Navigate to the extracted folder: <code>cd [path-to-files]</code></p>' +
           '<p>4. Preview first: <code>deploy_all.bat --dry-run</code></p>' +
           '<p>5. Deploy for real: <code>deploy_all.bat</code></p>' +
-          '<p style="margin-top:8px;color:#64748b;">The .bat files only work inside a Windchill shell (not a regular command prompt). The Windchill shell sets up the Java classpath and environment needed by the <code>windchill</code> CLI commands.</p>' +
+          '<p style="margin-top:8px;color:var(--c-text-dim);">The .bat files only work inside a Windchill shell (not a regular command prompt). The Windchill shell sets up the Java classpath and environment needed by the <code>windchill</code> CLI commands.</p>' +
           '<p style="margin-top:10px">6. After deployment, open the <strong>Deployment Checklist</strong> for the manual steps (teams, association rules, access control, testing):</p>' +
         '</div>' +
         '<div style="text-align:center; margin-top:16px;">' +
@@ -1138,13 +1214,15 @@
       }
 
       function bp(title, body) {
+        var speechHtml = (WCAI.speech && WCAI.speech.isSupported()) ?
+          ' <button class="speech-btn" onclick="event.stopPropagation();WCAI.speech.speakElement(this.closest(\'.bp-body\'))" title="Read aloud">&#9654;</button>' : '';
         return '<div class="bp-expander">' +
           '<div class="bp-header">' +
             '<div class="bp-icon">?</div>' +
             '<div class="bp-header-text">' + title + '</div>' +
             '<span class="bp-arrow">&#9654;</span>' +
           '</div>' +
-          '<div class="bp-body">' + body + '</div>' +
+          '<div class="bp-body">' + speechHtml + body + '</div>' +
         '</div>';
       }
 
@@ -1191,7 +1269,7 @@
       html += beginSection('s5', 2, 'Create Groups and Add Users', 'Create Windchill groups, add users. Groups are assigned to roles.', 'manual');
       html += bp('Best Practice: Why groups instead of individual users?',
         '<p>The Windchill best practice pattern is:</p>' +
-        '<p style="text-align:center;font-size:14px;font-weight:700;color:#22c55e;padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
+        '<p style="text-align:center;font-size:14px;font-weight:700;color:var(--c-accent);padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
         '<p><strong>Maintainability:</strong> When someone joins or leaves, update group membership in one place. Every context team referencing that group reflects the change automatically.</p>' +
         '<p><strong>LDAP alignment:</strong> If Windchill groups map to AD groups, membership stays in sync with no manual administration.</p>' +
         '<p><strong>Auditability:</strong> Much easier to audit access when permissions flow through named groups.</p>'
@@ -1215,7 +1293,7 @@
       html += beginSection('s6', 3, 'Add Groups to OOTB Team Template Roles', 'Populate the existing Site-level team templates with your groups', 'manual');
       html += bp('Understanding Team Templates',
         '<p>Windchill ships with <strong>4 out-of-the-box team templates</strong> at the Site level. They are already bound to change objects through OIRs and already contain the correct role definitions:</p>' +
-        '<p style="font-size:12px;color:#94a3b8;padding:4px 0 8px;">Problem Report Team &bull; Change Request Team &bull; Change Notice Team &bull; Change Activity Team</p>' +
+        '<p style="font-size:12px;color:var(--c-text-muted);padding:4px 0 8px;">Problem Report Team &bull; Change Request Team &bull; Change Notice Team &bull; Change Activity Team</p>' +
         '<p>However, these templates have <strong>no participants assigned to the roles</strong> by default. You need to open each template and add your groups to the appropriate roles.</p>' +
         '<p>You do <strong>not</strong> need to create new team templates. Just edit the existing ones.</p>'
       );
@@ -1403,8 +1481,8 @@
       saveToStorage();
     } catch (err) {
       document.getElementById("main").innerHTML =
-        '<h1 style="color:#ef4444;">Checklist Error</h1>' +
-        '<pre style="color:#fca5a5;white-space:pre-wrap;">' + err.message + '\n\n' + err.stack + '</pre>' +
+        '<h1 style="color:var(--c-danger);">Checklist Error</h1>' +
+        '<pre style="color:var(--c-danger-light);white-space:pre-wrap;">' + err.message + '\n\n' + err.stack + '</pre>' +
         navButtons();
     }
   }
@@ -1475,6 +1553,12 @@
     goToStep: goToStep,
     saveAndNext: saveAndNext,
     switchWizard: switchWizard,
+    // Theme
+    toggleTheme: toggleTheme,
+    // Sidebar
+    toggleSidebar: toggleSidebar,
+    openMobileSidebar: openMobileSidebar,
+    closeMobileSidebar: closeMobileSidebar,
     // Company
     setCompany: setCompany,
     toggleCompany: toggleCompany,

@@ -33,20 +33,25 @@
   // ============================================================
   // Shared Helpers
   // ============================================================
+  function speechBtn(onclickExpr) {
+    if (!WCAI.speech || !WCAI.speech.isSupported()) return '';
+    return ' <button class="speech-btn" onclick="' + onclickExpr + '" title="Read aloud">&#9654;</button>';
+  }
+
   function conceptCard(color, title, subtitle, body) {
     return '<div class="ref-concept-card ref-border-' + color + '">' +
       '<div style="margin-bottom:10px;">' +
         '<span class="ref-tag ' + color + '">' + title + '</span>' +
       '</div>' +
-      '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:6px;">' + subtitle + '</div>' +
-      '<div style="font-size:12px;color:#94a3b8;line-height:1.7;">' + body + '</div>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:6px;">' + subtitle + '</div>' +
+      '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.7;">' + body + '</div>' +
     '</div>';
   }
 
   function scenarioStep(num, color, text) {
     return '<div class="ref-scenario-step">' +
       '<span class="ref-step-num ref-bg-' + color + '">' + num + '</span>' +
-      '<span style="font-size:12.5px;color:#cbd5e1;line-height:1.6;">' + text + '</span>' +
+      '<span style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.6;">' + text + '</span>' +
     '</div>';
   }
 
@@ -76,7 +81,7 @@
         'Application Context',
         'The container hierarchy that scopes all objects and permissions.',
         '<p>Every object in Windchill lives inside a <strong>context</strong>. The hierarchy flows:</p>' +
-        '<p style="text-align:center;font-size:14px;font-weight:700;color:#4ea8de;padding:6px 0;">Site &rarr; Organization &rarr; Product / Library</p>' +
+        '<p style="text-align:center;font-size:14px;font-weight:700;color:var(--c-ref-blue);padding:6px 0;">Site &rarr; Organization &rarr; Product / Library</p>' +
         '<p>Permissions, teams, and policies are defined <em>per context</em>. A user\'s effective access depends on which context they\'re operating in.</p>' +
         '<ul>' +
           '<li><strong>Site</strong> -- Global settings, license management, system admin</li>' +
@@ -90,13 +95,13 @@
         'Every user in a context is either a Guest or a Member with specific roles.',
         '<p>When a user accesses a Product or Library context, Windchill classifies them:</p>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">' +
-          '<div style="padding:10px;border-radius:6px;border:1px solid rgba(245,158,97,0.3);background:rgba(245,158,97,0.05);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Guest</div>' +
-            '<div style="font-size:11px;color:#94a3b8;">Not on the context team. Gets <em>Guest</em> role permissions only. Typically read-only or no access.</div>' +
+          '<div style="padding:10px;border-radius:6px;border:1px solid var(--c-ref-orange-030);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Guest</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);">Not on the context team. Gets <em>Guest</em> role permissions only. Typically read-only or no access.</div>' +
           '</div>' +
-          '<div style="padding:10px;border-radius:6px;border:1px solid rgba(245,158,97,0.3);background:rgba(245,158,97,0.05);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Member</div>' +
-            '<div style="font-size:11px;color:#94a3b8;">On the context team with one or more roles. Gets permissions for <em>all</em> assigned roles combined.</div>' +
+          '<div style="padding:10px;border-radius:6px;border:1px solid var(--c-ref-orange-030);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Member</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);">On the context team with one or more roles. Gets permissions for <em>all</em> assigned roles combined.</div>' +
           '</div>' +
         '</div>' +
         '<p>Roles are populated by <strong>groups</strong>, not individual users. The pattern is: Users &rarr; Groups &rarr; Roles.</p>'
@@ -116,7 +121,7 @@
 
     // --- SVG Diagram ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">How the Three Systems Connect</h2>' +
+      '<h2 style="font-size:16px;font-weight:700;color:var(--c-text-primary);margin-bottom:12px;">How the Three Systems Connect' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
       '<div class="ref-diagram">' + renderDiagram() + '</div>' +
     '</div>';
 
@@ -124,28 +129,28 @@
     html += '<div class="ref-insight">' +
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
         '<span class="ref-tag purple">Access Control Policy</span>' +
-        '<span style="font-size:14px;font-weight:700;color:#c084fc;">The Glue That Binds</span>' +
+        '<span style="font-size:14px;font-weight:700;color:var(--c-ref-purple);">The Glue That Binds</span>' +
       '</div>' +
-      '<p style="font-size:12.5px;color:#cbd5e1;line-height:1.7;">An Access Control Policy (ACP) rule says: <em>"For this <span class="ref-tag blue">Context</span>, users in this <span class="ref-tag orange">Role</span>, acting on objects in this <span class="ref-tag green">Content Group</span>, at this lifecycle state, may perform these actions."</em></p>' +
-      '<p style="font-size:12px;color:#94a3b8;margin-top:6px;">Without an ACP rule granting permission, the default answer is <strong>deny</strong>. Windchill uses a "grant-only" model -- there are no explicit deny rules.</p>' +
+      '<p style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;">An Access Control Policy (ACP) rule says: <em>"For this <span class="ref-tag blue">Context</span>, users in this <span class="ref-tag orange">Role</span>, acting on objects in this <span class="ref-tag green">Content Group</span>, at this lifecycle state, may perform these actions."</em></p>' +
+      '<p style="font-size:12px;color:var(--c-text-muted);margin-top:6px;">Without an ACP rule granting permission, the default answer is <strong>deny</strong>. Windchill uses a "grant-only" model -- there are no explicit deny rules.</p>' +
     '</div>';
 
     // --- Interactive Scenarios ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Interactive Scenarios</h2>' +
-      '<p style="font-size:12px;color:#64748b;margin-bottom:12px;">Walk through common access scenarios to see how Context, Roles, and Content Groups work together.</p>' +
+      '<h2 style="font-size:16px;font-weight:700;color:var(--c-text-primary);margin-bottom:12px;">Interactive Scenarios' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
+      '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:12px;">Walk through common access scenarios to see how Context, Roles, and Content Groups work together.</p>' +
       renderScenarioTabs() +
     '</div>';
 
     // --- Cheat Sheet ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Quick Reference Cheat Sheet</h2>' +
+      '<h2 style="font-size:16px;font-weight:700;color:var(--c-text-primary);margin-bottom:12px;">Quick Reference Cheat Sheet</h2>' +
       renderCheatSheet() +
     '</div>';
 
     // --- Common Misconceptions ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Common Misconceptions</h2>' +
+      '<h2 style="font-size:16px;font-weight:700;color:var(--c-text-primary);margin-bottom:12px;">Common Misconceptions' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
       renderMisconceptions() +
     '</div>';
 
@@ -159,37 +164,37 @@
   function renderDiagram() {
     return '<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">' +
       '<defs>' +
-        '<marker id="ref-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#64748b"/></marker>' +
+        '<marker id="ref-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" style="fill:var(--c-text-dim)"/></marker>' +
       '</defs>' +
-      '<rect width="700" height="320" rx="12" fill="#0f172a"/>' +
-      '<rect x="20" y="130" width="100" height="60" rx="8" fill="#1e293b" stroke="#64748b" stroke-width="1"/>' +
-      '<text x="70" y="155" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">User</text>' +
-      '<text x="70" y="172" text-anchor="middle" fill="#64748b" font-size="9">(jsmith)</text>' +
-      '<line x1="120" y1="160" x2="188" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
-      '<text x="154" y="152" text-anchor="middle" fill="#475569" font-size="8">enters</text>' +
-      '<rect x="190" y="110" width="150" height="100" rx="8" fill="rgba(78,168,222,0.08)" stroke="#4ea8de" stroke-width="1.5"/>' +
-      '<text x="265" y="135" text-anchor="middle" fill="#4ea8de" font-size="10" font-weight="700">APPLICATION CONTEXT</text>' +
-      '<text x="265" y="155" text-anchor="middle" fill="#e2e8f0" font-size="11">Product / Library</text>' +
-      '<text x="265" y="175" text-anchor="middle" fill="#64748b" font-size="9">Context Team evaluates</text>' +
-      '<text x="265" y="190" text-anchor="middle" fill="#64748b" font-size="9">Guest vs. Member</text>' +
-      '<line x1="340" y1="140" x2="408" y2="90" stroke="#f4a261" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
-      '<text x="385" y="105" text-anchor="middle" fill="#475569" font-size="8">assigns</text>' +
-      '<rect x="410" y="50" width="130" height="80" rx="8" fill="rgba(244,162,97,0.08)" stroke="#f4a261" stroke-width="1.5"/>' +
-      '<text x="475" y="75" text-anchor="middle" fill="#f4a261" font-size="10" font-weight="700">ROLE</text>' +
-      '<text x="475" y="95" text-anchor="middle" fill="#e2e8f0" font-size="11">Change Admin I</text>' +
-      '<text x="475" y="112" text-anchor="middle" fill="#64748b" font-size="9">via Group membership</text>' +
-      '<line x1="340" y1="180" x2="408" y2="220" stroke="#7ec98f" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
-      '<text x="385" y="208" text-anchor="middle" fill="#475569" font-size="8">scopes</text>' +
-      '<rect x="410" y="190" width="130" height="80" rx="8" fill="rgba(126,201,143,0.08)" stroke="#7ec98f" stroke-width="1.5"/>' +
-      '<text x="475" y="215" text-anchor="middle" fill="#7ec98f" font-size="10" font-weight="700">CONTENT GROUP</text>' +
-      '<text x="475" y="235" text-anchor="middle" fill="#e2e8f0" font-size="11">CAD Data</text>' +
-      '<text x="475" y="252" text-anchor="middle" fill="#64748b" font-size="9">Object type / state filter</text>' +
-      '<line x1="540" y1="100" x2="588" y2="140" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
-      '<line x1="540" y1="225" x2="588" y2="185" stroke="#c084fc" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
-      '<rect x="590" y="120" width="95" height="80" rx="8" fill="rgba(192,132,252,0.08)" stroke="#c084fc" stroke-width="1.5"/>' +
-      '<text x="637" y="148" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="700">ACCESS CONTROL</text>' +
-      '<text x="637" y="162" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="700">POLICY</text>' +
-      '<text x="637" y="182" text-anchor="middle" fill="#e2e8f0" font-size="10">Grant / Deny</text>' +
+      '<rect width="700" height="320" rx="12" style="fill:var(--c-bg-base)"/>' +
+      '<rect x="20" y="130" width="100" height="60" rx="8" style="fill:var(--c-bg-surface)" stroke="var(--c-text-dim)" stroke-width="1"/>' +
+      '<text x="70" y="155" text-anchor="middle" style="fill:var(--c-text)" font-size="11" font-weight="700">User</text>' +
+      '<text x="70" y="172" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="9">(jsmith)</text>' +
+      '<line x1="120" y1="160" x2="188" y2="160" stroke="var(--c-text-dim)" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
+      '<text x="154" y="152" text-anchor="middle" style="fill:var(--c-border-hover)" font-size="8">enters</text>' +
+      '<rect x="190" y="110" width="150" height="100" rx="8" style="fill:var(--c-ref-blue-008)" stroke="var(--c-ref-blue)" stroke-width="1.5"/>' +
+      '<text x="265" y="135" text-anchor="middle" style="fill:var(--c-ref-blue)" font-size="10" font-weight="700">APPLICATION CONTEXT</text>' +
+      '<text x="265" y="155" text-anchor="middle" style="fill:var(--c-text)" font-size="11">Product / Library</text>' +
+      '<text x="265" y="175" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="9">Context Team evaluates</text>' +
+      '<text x="265" y="190" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="9">Guest vs. Member</text>' +
+      '<line x1="340" y1="140" x2="408" y2="90" stroke="var(--c-ref-orange)" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
+      '<text x="385" y="105" text-anchor="middle" style="fill:var(--c-border-hover)" font-size="8">assigns</text>' +
+      '<rect x="410" y="50" width="130" height="80" rx="8" style="fill:var(--c-ref-orange-005)" stroke="var(--c-ref-orange)" stroke-width="1.5"/>' +
+      '<text x="475" y="75" text-anchor="middle" style="fill:var(--c-ref-orange)" font-size="10" font-weight="700">ROLE</text>' +
+      '<text x="475" y="95" text-anchor="middle" style="fill:var(--c-text)" font-size="11">Change Admin I</text>' +
+      '<text x="475" y="112" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="9">via Group membership</text>' +
+      '<line x1="340" y1="180" x2="408" y2="220" stroke="var(--c-ref-green)" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
+      '<text x="385" y="208" text-anchor="middle" style="fill:var(--c-border-hover)" font-size="8">scopes</text>' +
+      '<rect x="410" y="190" width="130" height="80" rx="8" style="fill:var(--c-ref-green-008)" stroke="var(--c-ref-green)" stroke-width="1.5"/>' +
+      '<text x="475" y="215" text-anchor="middle" style="fill:var(--c-ref-green)" font-size="10" font-weight="700">CONTENT GROUP</text>' +
+      '<text x="475" y="235" text-anchor="middle" style="fill:var(--c-text)" font-size="11">CAD Data</text>' +
+      '<text x="475" y="252" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="9">Object type / state filter</text>' +
+      '<line x1="540" y1="100" x2="588" y2="140" stroke="var(--c-ref-purple)" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
+      '<line x1="540" y1="225" x2="588" y2="185" stroke="var(--c-ref-purple)" stroke-width="1.5" marker-end="url(#ref-arrow)"/>' +
+      '<rect x="590" y="120" width="95" height="80" rx="8" style="fill:var(--c-purple-008)" stroke="var(--c-ref-purple)" stroke-width="1.5"/>' +
+      '<text x="637" y="148" text-anchor="middle" style="fill:var(--c-ref-purple)" font-size="9" font-weight="700">ACCESS CONTROL</text>' +
+      '<text x="637" y="162" text-anchor="middle" style="fill:var(--c-ref-purple)" font-size="9" font-weight="700">POLICY</text>' +
+      '<text x="637" y="182" text-anchor="middle" style="fill:var(--c-text)" font-size="10">Grant / Deny</text>' +
     '</svg>';
   }
 
@@ -197,7 +202,7 @@
     new_user: {
       label: "New User Access",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Scenario: New user can\'t see a Product</h3>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-text-primary);margin-bottom:8px;">Scenario: New user can\'t see a Product</h3>' +
         '<div class="ref-scenario-steps">' +
           scenarioStep(1, 'blue', 'User logs in to Windchill and navigates to a Product.') +
           scenarioStep(2, 'orange', 'Windchill checks the Product\'s context team. User is NOT listed in any role.') +
@@ -212,7 +217,7 @@
     change_admin: {
       label: "Change Admin Workflow",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Scenario: Change Admin I creates a Problem Report</h3>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-text-primary);margin-bottom:8px;">Scenario: Change Admin I creates a Problem Report</h3>' +
         '<div class="ref-scenario-steps">' +
           scenarioStep(1, 'blue', 'Change Admin I navigates to the Product context where the issue was found.') +
           scenarioStep(2, 'orange', 'User\'s group (e.g., Engineering) is assigned to the <strong>Change Admin I</strong> role in the context team.') +
@@ -227,7 +232,7 @@
     crb_review: {
       label: "CRB Review",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Scenario: Change Review Board votes on a Change Request</h3>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-text-primary);margin-bottom:8px;">Scenario: Change Review Board votes on a Change Request</h3>' +
         '<div class="ref-scenario-steps">' +
           scenarioStep(1, 'blue', 'CRB members receive a workflow task to review a Change Request in a Product context.') +
           scenarioStep(2, 'orange', 'Their groups (e.g., Management, QA) are assigned to the <strong>Change Review Board</strong> role.') +
@@ -242,7 +247,7 @@
     cross_context: {
       label: "Cross-Context Access",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Scenario: User needs access to objects in two different Products</h3>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-text-primary);margin-bottom:8px;">Scenario: User needs access to objects in two different Products</h3>' +
         '<div class="ref-scenario-steps">' +
           scenarioStep(1, 'blue', 'User is a Member of <strong>Product A</strong> (Engineering role) but only a <strong>Guest</strong> in Product B.') +
           scenarioStep(2, 'orange', 'In Product A, they have full create/modify access. In Product B, they can only browse.') +
@@ -304,7 +309,7 @@
   }
 
   function cheatRow(question, system, where) {
-    return '<tr><td style="font-weight:600;color:#e2e8f0;">' + question + '</td><td>' + system + '</td><td style="color:#94a3b8;">' + where + '</td></tr>';
+    return '<tr><td style="font-weight:600;color:var(--c-text);">' + question + '</td><td>' + system + '</td><td style="color:var(--c-text-muted);">' + where + '</td></tr>';
   }
 
   function renderMisconceptions() {
@@ -332,12 +337,12 @@
 
   function misconceptionCard(myth, reality, tldr) {
     return '<div class="ref-mistake-card">' +
-      '<div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
-        '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(239,68,68,0.15);font-size:10px;">X</span>' +
+      '<div style="font-size:12px;font-weight:700;color:var(--c-danger);margin-bottom:6px;display:flex;align-items:center;gap:6px;">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--c-danger-015);font-size:10px;">X</span>' +
         'Myth: ' + myth +
       '</div>' +
-      '<div style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:6px;">' + reality + '</div>' +
-      '<div style="font-size:11px;color:#22c55e;font-weight:600;">TL;DR: ' + tldr + '</div>' +
+      '<div style="font-size:12px;color:var(--c-text-secondary);line-height:1.6;margin-bottom:6px;">' + reality + '</div>' +
+      '<div style="font-size:11px;color:var(--c-accent);font-weight:600;">TL;DR: ' + tldr + '</div>' +
     '</div>';
   }
 
@@ -396,8 +401,8 @@
 
     // --- Priority Hierarchy ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 class="ref-section-title">Access Control Priority Hierarchy</h2>' +
-      '<p style="font-size:12px;color:#64748b;margin-bottom:12px;">The strongest applicable rule wins. Evaluated top-to-bottom -- the first matching rule takes precedence.</p>' +
+      '<h2 class="ref-section-title">Access Control Priority Hierarchy' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
+      '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:12px;">The strongest applicable rule wins. Evaluated top-to-bottom -- the first matching rule takes precedence.</p>' +
       '<table class="ref-cheat-table">' +
         '<thead><tr><th style="width:50px;">#</th><th>Rule Source</th><th>Grant / Deny</th><th>Applies To</th><th>Strength</th></tr></thead>' +
         '<tbody>' +
@@ -409,18 +414,18 @@
           priorityRow(6, 'Domain Rule (Named User)', 'Grant', 'Specific user', 'ref-tag blue') +
           priorityRow(7, 'Domain Rule (Group/Role)', 'Deny', 'Group, role, or org', 'ref-tag blue') +
           priorityRow(8, 'Domain Rule (Group/Role)', 'Grant', 'Group, role, or org', 'ref-tag blue') +
-          '<tr><td style="color:#64748b;">--</td><td style="font-weight:600;color:#ef4444;">Default Deny</td><td style="color:#ef4444;">Deny</td><td style="color:#94a3b8;">N/A -- no rule matched</td><td><span class="ref-tag" style="background:rgba(239,68,68,0.15);color:#ef4444;">Weakest</span></td></tr>' +
+          '<tr><td style="color:var(--c-text-dim);">--</td><td style="font-weight:600;color:var(--c-danger);">Default Deny</td><td style="color:var(--c-danger);">Deny</td><td style="color:var(--c-text-muted);">N/A -- no rule matched</td><td><span class="ref-tag" style="background:var(--c-danger-015);color:var(--c-danger);">Weakest</span></td></tr>' +
         '</tbody>' +
       '</table>' +
       '<div class="ref-insight" style="margin-top:12px;">' +
-        '<p style="font-size:12px;color:#cbd5e1;line-height:1.7;"><strong>Key rule:</strong> If a participant has both a Grant and a Deny for the same permission from domain rules at the same level (both are group-level rules), the permission is <strong>NOT granted</strong> (deny wins). An Absolute Deny cannot be overridden by anything except removing the rule itself.</p>' +
+        '<p style="font-size:12px;color:var(--c-text-secondary);line-height:1.7;"><strong>Key rule:</strong> If a participant has both a Grant and a Deny for the same permission from domain rules at the same level (both are group-level rules), the permission is <strong>NOT granted</strong> (deny wins). An Absolute Deny cannot be overridden by anything except removing the rule itself.</p>' +
       '</div>' +
     '</div>';
 
     // --- Domain Architecture SVG ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 class="ref-section-title">Domain Architecture</h2>' +
-      '<p style="font-size:12px;color:#64748b;margin-bottom:12px;">Every access-controlled object belongs to exactly one domain. Domains inherit rules from their parents up to /(Root).</p>' +
+      '<h2 class="ref-section-title">Domain Architecture' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
+      '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:12px;">Every access-controlled object belongs to exactly one domain. Domains inherit rules from their parents up to /(Root).</p>' +
       '<div class="ref-diagram">' + renderDomainDiagram() + '</div>' +
     '</div>';
 
@@ -428,25 +433,25 @@
     html += '<div style="margin:20px 0 24px;">' +
       '<h2 class="ref-section-title">Domain Types</h2>' +
       '<div class="ref-mistakes-grid">' +
-        domainTypeCard('/(Root)', 'Global rules governing the entire Windchill installation. All domains inherit from Root. Do not alter.', '#64748b') +
-        domainTypeCard('User / Organization', 'Controls participants (users, groups, orgs). Do not alter -- defaults are required for proper operation.', '#64748b') +
-        domainTypeCard('System', 'Per-context domain for administrative templates (lifecycles, workflows, team templates). Do not alter.', '#64748b') +
-        domainTypeCard('Data Domains (Default, PDM, Project)', 'Where you spend most effort. Controls access to parts, documents, CAD data. Safe to customize.', '#22c55e') +
-        domainTypeCard('Private', 'Bypasses PDM/Project global rules for private Products/Libraries. Enables restrictive per-context policies.', '#f59e0b') +
-        domainTypeCard('Folder Domains', 'Manually created and assigned to specific folders. Overrides the parent context domain for that folder.', '#f59e0b') +
+        domainTypeCard('/(Root)', 'Global rules governing the entire Windchill installation. All domains inherit from Root. Do not alter.', 'var(--c-text-dim)') +
+        domainTypeCard('User / Organization', 'Controls participants (users, groups, orgs). Do not alter -- defaults are required for proper operation.', 'var(--c-text-dim)') +
+        domainTypeCard('System', 'Per-context domain for administrative templates (lifecycles, workflows, team templates). Do not alter.', 'var(--c-text-dim)') +
+        domainTypeCard('Data Domains (Default, PDM, Project)', 'Where you spend most effort. Controls access to parts, documents, CAD data. Safe to customize.', 'var(--c-accent)') +
+        domainTypeCard('Private', 'Bypasses PDM/Project global rules for private Products/Libraries. Enables restrictive per-context policies.', 'var(--c-warning)') +
+        domainTypeCard('Folder Domains', 'Manually created and assigned to specific folders. Overrides the parent context domain for that folder.', 'var(--c-warning)') +
       '</div>' +
     '</div>';
 
     // --- Five Components of a Rule ---
     html += '<div style="margin:28px 0 24px;">' +
-      '<h2 class="ref-section-title">Five Components of an Access Control Rule</h2>' +
-      '<p style="font-size:12px;color:#64748b;margin-bottom:12px;">Every domain access control rule answers five questions.</p>' +
+      '<h2 class="ref-section-title">Five Components of an Access Control Rule' + speechBtn('WCAI.speech.speakElement(this.parentElement.nextElementSibling || this.parentElement)') + '</h2>' +
+      '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:12px;">Every domain access control rule answers five questions.</p>' +
       '<div class="ref-rule-components">' +
-        ruleComponent(1, 'Where?', 'Domain & Context', 'Which domain does the rule apply to? Rules inherit through the domain hierarchy.', '#4ea8de') +
-        ruleComponent(2, 'What?', 'Object Type', 'Which type of object (WTDocument, WTPart, etc.)? Applies to the type and all its subtypes.', '#7ec98f') +
-        ruleComponent(3, 'When?', 'Lifecycle State', 'All states, or a specific state (e.g., Released, Under Review, Creation)?', '#f4a261') +
-        ruleComponent(4, 'Who?', 'Participant', 'A user, group, organization, role, pseudo-role (All, Owner), or "all except" a participant.', '#c084fc') +
-        ruleComponent(5, 'How?', 'Permission', 'Grant, Deny, or Absolute Deny for each permission (Read, Modify, Create, etc.).', '#ef4444') +
+        ruleComponent(1, 'Where?', 'Domain & Context', 'Which domain does the rule apply to? Rules inherit through the domain hierarchy.', 'var(--c-ref-blue)') +
+        ruleComponent(2, 'What?', 'Object Type', 'Which type of object (WTDocument, WTPart, etc.)? Applies to the type and all its subtypes.', 'var(--c-ref-green)') +
+        ruleComponent(3, 'When?', 'Lifecycle State', 'All states, or a specific state (e.g., Released, Under Review, Creation)?', 'var(--c-ref-orange)') +
+        ruleComponent(4, 'Who?', 'Participant', 'A user, group, organization, role, pseudo-role (All, Owner), or "all except" a participant.', 'var(--c-ref-purple)') +
+        ruleComponent(5, 'How?', 'Permission', 'Grant, Deny, or Absolute Deny for each permission (Read, Modify, Create, etc.).', 'var(--c-danger)') +
       '</div>' +
     '</div>';
 
@@ -478,7 +483,7 @@
     // --- Case Studies ---
     html += '<div style="margin:28px 0 24px;">' +
       '<h2 class="ref-section-title">Case Study: Grant vs. Deny Strategies</h2>' +
-      '<p style="font-size:12px;color:#64748b;margin-bottom:12px;">Three approaches to the same requirement: each group gets exclusive read access to a specific document type. Click to compare.</p>' +
+      '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:12px;">Three approaches to the same requirement: each group gets exclusive read access to a specific document type. Click to compare.</p>' +
       renderCaseStudyTabs() +
     '</div>';
 
@@ -504,7 +509,7 @@
           '</ul>') +
       '</div>' +
       '<div class="ref-insight" style="margin-top:12px;">' +
-        '<p style="font-size:12.5px;color:#cbd5e1;line-height:1.7;"><strong>Best practice:</strong> Use lifecycle ad hoc rules for <em>process-driven</em> temporary access (e.g., granting reviewers Read during Under Review state). Use Edit Access Control for <em>discretionary</em> one-off grants. Keep ad hoc usage sparse to minimize administration complexity.</p>' +
+        '<p style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;"><strong>Best practice:</strong> Use lifecycle ad hoc rules for <em>process-driven</em> temporary access (e.g., granting reviewers Read during Under Review state). Use Edit Access Control for <em>discretionary</em> one-off grants. Keep ad hoc usage sparse to minimize administration complexity.</p>' +
       '</div>' +
     '</div>';
 
@@ -514,17 +519,17 @@
       '<div class="ref-concept-card ref-border-purple" style="margin-bottom:12px;">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
           '<span class="ref-tag purple">Strongest Rule</span>' +
-          '<span style="font-size:13px;font-weight:700;color:#c084fc;">Security Labels override ALL other access control</span>' +
+          '<span style="font-size:13px;font-weight:700;color:var(--c-ref-purple);">Security Labels override ALL other access control</span>' +
         '</div>' +
-        '<div style="font-size:12px;color:#94a3b8;line-height:1.7;">' +
+        '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.7;">' +
           '<p>Security labels classify objects and <strong>deny all access</strong> to unauthorized users, regardless of domain or ad hoc rules. They act as a gate: if the user is not cleared for all labels on an object, they cannot access it at all.</p>' +
           '<table class="ref-cheat-table" style="margin-top:12px;">' +
             '<thead><tr><th>Component</th><th>Description</th><th>Example</th></tr></thead>' +
             '<tbody>' +
-              '<tr><td style="font-weight:600;color:#e2e8f0;">Label</td><td style="color:#94a3b8;">Classification category</td><td style="color:#94a3b8;">EXPORT CONTROL, CORPORATE PROPRIETARY</td></tr>' +
-              '<tr><td style="font-weight:600;color:#e2e8f0;">Label Values</td><td style="color:#94a3b8;">Sensitivity levels within a label</td><td style="color:#94a3b8;">Public, Internal Only, Highly Trusted</td></tr>' +
-              '<tr><td style="font-weight:600;color:#e2e8f0;">Participants</td><td style="color:#94a3b8;">Authorized users/groups per label value</td><td style="color:#94a3b8;">Internal Personnel group for "Internal Only"</td></tr>' +
-              '<tr><td style="font-weight:600;color:#e2e8f0;">Agreements</td><td style="color:#94a3b8;">Workflow-driven exceptions (lifecycle-controlled)</td><td style="color:#94a3b8;">NDA granting temporary access to labeled objects</td></tr>' +
+              '<tr><td style="font-weight:600;color:var(--c-text);">Label</td><td style="color:var(--c-text-muted);">Classification category</td><td style="color:var(--c-text-muted);">EXPORT CONTROL, CORPORATE PROPRIETARY</td></tr>' +
+              '<tr><td style="font-weight:600;color:var(--c-text);">Label Values</td><td style="color:var(--c-text-muted);">Sensitivity levels within a label</td><td style="color:var(--c-text-muted);">Public, Internal Only, Highly Trusted</td></tr>' +
+              '<tr><td style="font-weight:600;color:var(--c-text);">Participants</td><td style="color:var(--c-text-muted);">Authorized users/groups per label value</td><td style="color:var(--c-text-muted);">Internal Personnel group for "Internal Only"</td></tr>' +
+              '<tr><td style="font-weight:600;color:var(--c-text);">Agreements</td><td style="color:var(--c-text-muted);">Workflow-driven exceptions (lifecycle-controlled)</td><td style="color:var(--c-text-muted);">NDA granting temporary access to labeled objects</td></tr>' +
             '</tbody>' +
           '</table>' +
           '<p style="margin-top:10px;"><strong>Note:</strong> Being an authorized participant for a security label does not <em>grant</em> access -- it only removes the label\'s denial. The user must still have access via domain or ad hoc rules.</p>' +
@@ -536,11 +541,11 @@
     html += '<div style="margin:28px 0 24px;">' +
       '<h2 class="ref-section-title">Troubleshooting Access Issues</h2>' +
       '<div class="ref-rule-components">' +
-        ruleComponent(1, 'Check', 'License Group', 'Does the user have a license group at all? No license = no Windchill access.', '#ef4444') +
-        ruleComponent(2, 'Check', 'Context Team', 'Is the user\'s group on the Product context team? If not, they\'re a Guest.', '#f4a261') +
-        ruleComponent(3, 'Check', 'Domain Rules', 'Use Policy Admin &rarr; View Access Control List to see combined rules for a type/state.', '#4ea8de') +
-        ruleComponent(4, 'Check', 'Ad Hoc Rules', 'Object &rarr; Actions &rarr; Edit Access Control &rarr; View Access Information for the user.', '#7ec98f') +
-        ruleComponent(5, 'Check', 'Security Labels', 'Is the object labeled? If so, is the user an authorized participant for that label?', '#c084fc') +
+        ruleComponent(1, 'Check', 'License Group', 'Does the user have a license group at all? No license = no Windchill access.', 'var(--c-danger)') +
+        ruleComponent(2, 'Check', 'Context Team', 'Is the user\'s group on the Product context team? If not, they\'re a Guest.', 'var(--c-ref-orange)') +
+        ruleComponent(3, 'Check', 'Domain Rules', 'Use Policy Admin &rarr; View Access Control List to see combined rules for a type/state.', 'var(--c-ref-blue)') +
+        ruleComponent(4, 'Check', 'Ad Hoc Rules', 'Object &rarr; Actions &rarr; Edit Access Control &rarr; View Access Information for the user.', 'var(--c-ref-green)') +
+        ruleComponent(5, 'Check', 'Security Labels', 'Is the object labeled? If so, is the user an authorized participant for that label?', 'var(--c-ref-purple)') +
       '</div>' +
     '</div>';
 
@@ -552,18 +557,18 @@
   // --- Access Control sub-renderers ---
 
   function priorityRow(num, source, grantDeny, appliesTo, tagClass) {
-    var color = grantDeny === 'Deny' ? '#ef4444' : '#22c55e';
-    return '<tr><td style="font-weight:700;color:#64748b;">' + num + '</td>' +
-      '<td style="font-weight:600;color:#e2e8f0;">' + source + '</td>' +
+    var color = grantDeny === 'Deny' ? 'var(--c-danger)' : 'var(--c-accent)';
+    return '<tr><td style="font-weight:700;color:var(--c-text-dim);">' + num + '</td>' +
+      '<td style="font-weight:600;color:var(--c-text);">' + source + '</td>' +
       '<td style="color:' + color + ';font-weight:600;">' + grantDeny + '</td>' +
-      '<td style="color:#94a3b8;">' + appliesTo + '</td>' +
+      '<td style="color:var(--c-text-muted);">' + appliesTo + '</td>' +
       '<td><span class="' + tagClass + '">' + (num <= 2 ? 'Strongest' : num <= 4 ? 'Strong' : 'Normal') + '</span></td></tr>';
   }
 
   function domainTypeCard(name, desc, accentColor) {
     return '<div class="ref-mistake-card" style="border-left:3px solid ' + accentColor + ';">' +
-      '<div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">' + name + '</div>' +
-      '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">' + desc + '</div>' +
+      '<div style="font-size:13px;font-weight:700;color:var(--c-text);margin-bottom:4px;">' + name + '</div>' +
+      '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.6;">' + desc + '</div>' +
     '</div>';
   }
 
@@ -572,81 +577,81 @@
       '<div class="ref-rule-num" style="background:' + color + ';">' + num + '</div>' +
       '<div>' +
         '<div style="font-size:10px;font-weight:700;color:' + color + ';text-transform:uppercase;letter-spacing:0.5px;">' + label + '</div>' +
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin:2px 0;">' + title + '</div>' +
-        '<div style="font-size:11.5px;color:#94a3b8;line-height:1.6;">' + desc + '</div>' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin:2px 0;">' + title + '</div>' +
+        '<div style="font-size:11.5px;color:var(--c-text-muted);line-height:1.6;">' + desc + '</div>' +
       '</div>' +
     '</div>';
   }
 
   function permRow(perm, desc, notes) {
-    return '<tr><td style="font-weight:600;color:#e2e8f0;white-space:nowrap;">' + perm + '</td>' +
-      '<td style="color:#cbd5e1;">' + desc + '</td>' +
-      '<td style="color:#64748b;font-size:11px;">' + notes + '</td></tr>';
+    return '<tr><td style="font-weight:600;color:var(--c-text);white-space:nowrap;">' + perm + '</td>' +
+      '<td style="color:var(--c-text-secondary);">' + desc + '</td>' +
+      '<td style="color:var(--c-text-dim);font-size:11px;">' + notes + '</td></tr>';
   }
 
   function renderDomainDiagram() {
     return '<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">' +
       '<defs>' +
-        '<marker id="ref-darrow" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0, 6 2.5, 0 5" fill="#475569"/></marker>' +
+        '<marker id="ref-darrow" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0, 6 2.5, 0 5" style="fill:var(--c-border-hover)"/></marker>' +
       '</defs>' +
-      '<rect width="700" height="300" rx="12" fill="#0f172a"/>' +
+      '<rect width="700" height="300" rx="12" style="fill:var(--c-bg-base)"/>' +
 
       // Root
-      '<rect x="290" y="10" width="120" height="36" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1"/>' +
-      '<text x="350" y="33" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="700">/ (Root)</text>' +
+      '<rect x="290" y="10" width="120" height="36" rx="6" style="fill:var(--c-bg-surface)" stroke="var(--c-text-dim)" stroke-width="1"/>' +
+      '<text x="350" y="33" text-anchor="middle" style="fill:var(--c-text)" font-size="11" font-weight="700">/ (Root)</text>' +
 
       // Level 2: User, Default, System, Private
-      '<line x1="320" y1="46" x2="120" y2="75" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<line x1="340" y1="46" x2="280" y2="75" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<line x1="360" y1="46" x2="420" y2="75" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<line x1="380" y1="46" x2="560" y2="75" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="320" y1="46" x2="120" y2="75" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="340" y1="46" x2="280" y2="75" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="360" y1="46" x2="420" y2="75" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="380" y1="46" x2="560" y2="75" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
 
-      '<rect x="60" y="76" width="120" height="32" rx="5" fill="rgba(100,116,139,0.1)" stroke="#64748b" stroke-width="1"/>' +
-      '<text x="120" y="97" text-anchor="middle" fill="#64748b" font-size="10">User</text>' +
+      '<rect x="60" y="76" width="120" height="32" rx="5" style="fill:var(--c-neutral-006)" stroke="var(--c-text-dim)" stroke-width="1"/>' +
+      '<text x="120" y="97" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="10">User</text>' +
 
-      '<rect x="220" y="76" width="120" height="32" rx="5" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>' +
-      '<text x="280" y="97" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="600">Org Default</text>' +
+      '<rect x="220" y="76" width="120" height="32" rx="5" style="fill:var(--c-accent-008)" stroke="var(--c-accent)" stroke-width="1.5"/>' +
+      '<text x="280" y="97" text-anchor="middle" style="fill:var(--c-accent)" font-size="10" font-weight="600">Org Default</text>' +
 
-      '<rect x="360" y="76" width="120" height="32" rx="5" fill="rgba(100,116,139,0.1)" stroke="#64748b" stroke-width="1"/>' +
-      '<text x="420" y="97" text-anchor="middle" fill="#64748b" font-size="10">System</text>' +
+      '<rect x="360" y="76" width="120" height="32" rx="5" style="fill:var(--c-neutral-006)" stroke="var(--c-text-dim)" stroke-width="1"/>' +
+      '<text x="420" y="97" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="10">System</text>' +
 
-      '<rect x="500" y="76" width="120" height="32" rx="5" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1.5"/>' +
-      '<text x="560" y="97" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">Private</text>' +
+      '<rect x="500" y="76" width="120" height="32" rx="5" style="fill:var(--c-warning-008)" stroke="var(--c-warning)" stroke-width="1.5"/>' +
+      '<text x="560" y="97" text-anchor="middle" style="fill:var(--c-warning)" font-size="10" font-weight="600">Private</text>' +
 
       // Level 3 from Org Default: PDM, Project
-      '<line x1="260" y1="108" x2="200" y2="140" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<line x1="300" y1="108" x2="360" y2="140" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="260" y1="108" x2="200" y2="140" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<line x1="300" y1="108" x2="360" y2="140" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
 
-      '<rect x="140" y="141" width="120" height="32" rx="5" fill="rgba(78,168,222,0.08)" stroke="#4ea8de" stroke-width="1.5"/>' +
-      '<text x="200" y="162" text-anchor="middle" fill="#4ea8de" font-size="10" font-weight="600">PDM</text>' +
+      '<rect x="140" y="141" width="120" height="32" rx="5" style="fill:var(--c-ref-blue-008)" stroke="var(--c-ref-blue)" stroke-width="1.5"/>' +
+      '<text x="200" y="162" text-anchor="middle" style="fill:var(--c-ref-blue)" font-size="10" font-weight="600">PDM</text>' +
 
-      '<rect x="300" y="141" width="120" height="32" rx="5" fill="rgba(78,168,222,0.08)" stroke="#4ea8de" stroke-width="1.5"/>' +
-      '<text x="360" y="162" text-anchor="middle" fill="#4ea8de" font-size="10" font-weight="600">Project</text>' +
+      '<rect x="300" y="141" width="120" height="32" rx="5" style="fill:var(--c-ref-blue-008)" stroke="var(--c-ref-blue)" stroke-width="1.5"/>' +
+      '<text x="360" y="162" text-anchor="middle" style="fill:var(--c-ref-blue)" font-size="10" font-weight="600">Project</text>' +
 
       // Level 4: Product Default (public) under PDM, Product Default (private) under Private
-      '<line x1="200" y1="173" x2="160" y2="205" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<rect x="90" y="206" width="140" height="36" rx="5" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1.5"/>' +
-      '<text x="160" y="222" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600">Product Default</text>' +
-      '<text x="160" y="235" text-anchor="middle" fill="#64748b" font-size="8">(Public Product)</text>' +
+      '<line x1="200" y1="173" x2="160" y2="205" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<rect x="90" y="206" width="140" height="36" rx="5" style="fill:var(--c-accent-008)" stroke="var(--c-accent)" stroke-width="1.5"/>' +
+      '<text x="160" y="222" text-anchor="middle" style="fill:var(--c-accent)" font-size="9" font-weight="600">Product Default</text>' +
+      '<text x="160" y="235" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="8">(Public Product)</text>' +
 
-      '<line x1="560" y1="108" x2="480" y2="205" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<rect x="410" y="206" width="140" height="36" rx="5" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1.5"/>' +
-      '<text x="480" y="222" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="600">Product Default</text>' +
-      '<text x="480" y="235" text-anchor="middle" fill="#64748b" font-size="8">(Private Product)</text>' +
+      '<line x1="560" y1="108" x2="480" y2="205" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<rect x="410" y="206" width="140" height="36" rx="5" style="fill:var(--c-warning-008)" stroke="var(--c-warning)" stroke-width="1.5"/>' +
+      '<text x="480" y="222" text-anchor="middle" style="fill:var(--c-warning)" font-size="9" font-weight="600">Product Default</text>' +
+      '<text x="480" y="235" text-anchor="middle" style="fill:var(--c-text-dim)" font-size="8">(Private Product)</text>' +
 
       // Folder domain under public product
-      '<line x1="160" y1="242" x2="160" y2="260" stroke="#475569" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
-      '<rect x="90" y="261" width="140" height="28" rx="5" fill="rgba(192,132,252,0.08)" stroke="#c084fc" stroke-width="1" stroke-dasharray="4 2"/>' +
-      '<text x="160" y="280" text-anchor="middle" fill="#c084fc" font-size="9">Folder Domain (optional)</text>' +
+      '<line x1="160" y1="242" x2="160" y2="260" stroke="var(--c-border-hover)" stroke-width="1" marker-end="url(#ref-darrow)"/>' +
+      '<rect x="90" y="261" width="140" height="28" rx="5" style="fill:var(--c-purple-008)" stroke="var(--c-ref-purple)" stroke-width="1" stroke-dasharray="4 2"/>' +
+      '<text x="160" y="280" text-anchor="middle" style="fill:var(--c-ref-purple)" font-size="9">Folder Domain (optional)</text>' +
 
       // Legend
-      '<text x="595" y="145" fill="#64748b" font-size="8">Legend:</text>' +
-      '<rect x="595" y="150" width="8" height="8" rx="1" fill="rgba(34,197,94,0.3)"/>' +
-      '<text x="608" y="158" fill="#94a3b8" font-size="8">Customize</text>' +
-      '<rect x="595" y="164" width="8" height="8" rx="1" fill="rgba(100,116,139,0.3)"/>' +
-      '<text x="608" y="172" fill="#94a3b8" font-size="8">Do not alter</text>' +
-      '<rect x="595" y="178" width="8" height="8" rx="1" fill="rgba(245,158,11,0.3)"/>' +
-      '<text x="608" y="186" fill="#94a3b8" font-size="8">Use with care</text>' +
+      '<text x="595" y="145" style="fill:var(--c-text-dim)" font-size="8">Legend:</text>' +
+      '<rect x="595" y="150" width="8" height="8" rx="1" style="fill:var(--c-accent-030)"/>' +
+      '<text x="608" y="158" style="fill:var(--c-text-muted)" font-size="8">Customize</text>' +
+      '<rect x="595" y="164" width="8" height="8" rx="1" style="fill:var(--c-neutral-006)"/>' +
+      '<text x="608" y="172" style="fill:var(--c-text-muted)" font-size="8">Do not alter</text>' +
+      '<rect x="595" y="178" width="8" height="8" rx="1" style="fill:var(--c-warning-020)"/>' +
+      '<text x="608" y="186" style="fill:var(--c-text-muted)" font-size="8">Use with care</text>' +
 
     '</svg>';
   }
@@ -656,17 +661,17 @@
     grant: {
       label: "Solution 3: Grant Only",
       tag: "Recommended",
-      tagColor: "#22c55e",
+      tagColor: "var(--c-accent)",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#22c55e;margin-bottom:8px;">Grant-Based Strategy (PTC Recommended)</h3>' +
-        '<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Only grant permissions to the groups that need them. No rule = no access (default deny).</p>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-accent);margin-bottom:8px;">Grant-Based Strategy (PTC Recommended)</h3>' +
+        '<p style="font-size:12px;color:var(--c-text-muted);margin-bottom:12px;">Only grant permissions to the groups that need them. No rule = no access (default deny).</p>' +
         '<table class="ref-cheat-table">' +
           '<thead><tr><th>Domain</th><th>Type</th><th>State</th><th>Participant</th><th>Permission</th></tr></thead>' +
           '<tbody>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">WTDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Documentation</td><td style="color:#22c55e;font-weight:600;">Grant Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">InvoiceDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Invoice</td><td style="color:#22c55e;font-weight:600;">Grant Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">ContractDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Contract</td><td style="color:#22c55e;font-weight:600;">Grant Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">EPMDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Engineering</td><td style="color:#22c55e;font-weight:600;">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">WTDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Documentation</td><td style="color:var(--c-accent);font-weight:600;">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">InvoiceDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Invoice</td><td style="color:var(--c-accent);font-weight:600;">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">ContractDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Contract</td><td style="color:var(--c-accent);font-weight:600;">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">EPMDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Engineering</td><td style="color:var(--c-accent);font-weight:600;">Grant Read</td></tr>' +
           '</tbody>' +
         '</table>' +
         '<div class="ref-scenario-fix" style="margin-top:12px;">' +
@@ -676,43 +681,43 @@
     deny: {
       label: "Solution 1: Deny",
       tag: "Problematic",
-      tagColor: "#ef4444",
+      tagColor: "var(--c-danger)",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#ef4444;margin-bottom:8px;">Deny-Based Strategy (Not Recommended)</h3>' +
-        '<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Grant broad access, then deny specific groups. Leads to conflicts.</p>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-danger);margin-bottom:8px;">Deny-Based Strategy (Not Recommended)</h3>' +
+        '<p style="font-size:12px;color:var(--c-text-muted);margin-bottom:12px;">Grant broad access, then deny specific groups. Leads to conflicts.</p>' +
         '<table class="ref-cheat-table">' +
           '<thead><tr><th>Domain</th><th>Type</th><th>State</th><th>Participant</th><th>Permission</th></tr></thead>' +
           '<tbody>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">WTObject</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Design Group</td><td style="color:#22c55e;">Grant Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">WTDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Engineering</td><td style="color:#ef4444;font-weight:600;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">EPMDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Documentation</td><td style="color:#ef4444;font-weight:600;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">InvoiceDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Contract</td><td style="color:#ef4444;font-weight:600;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">ContractDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Invoice</td><td style="color:#ef4444;font-weight:600;">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">WTObject</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Design Group</td><td style="color:var(--c-accent);">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">WTDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Engineering</td><td style="color:var(--c-danger);font-weight:600;">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">EPMDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Documentation</td><td style="color:var(--c-danger);font-weight:600;">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">InvoiceDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Contract</td><td style="color:var(--c-danger);font-weight:600;">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">ContractDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Invoice</td><td style="color:var(--c-danger);font-weight:600;">Deny Read</td></tr>' +
           '</tbody>' +
         '</table>' +
-        '<div class="ref-scenario-fix" style="margin-top:12px;border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04);">' +
-          '<strong style="color:#ef4444;">Problems:</strong> A user in both Invoice and Contract groups gets denied access to both types (deny wins over grant). New subgroups inherit broad access unintentionally.' +
+        '<div class="ref-scenario-fix" style="margin-top:12px;border-color:var(--c-danger-030);background:var(--c-danger-008);">' +
+          '<strong style="color:var(--c-danger);">Problems:</strong> A user in both Invoice and Contract groups gets denied access to both types (deny wins over grant). New subgroups inherit broad access unintentionally.' +
         '</div>'
     },
     inverse: {
       label: "Solution 2: Inverse Deny",
       tag: "Better",
-      tagColor: "#f59e0b",
+      tagColor: "var(--c-warning)",
       content:
-        '<h3 style="font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:8px;">Inverse Deny Strategy (Improved but Complex)</h3>' +
-        '<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Grant broad access, then deny everyone <em>except</em> the authorized group for each type.</p>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-warning);margin-bottom:8px;">Inverse Deny Strategy (Improved but Complex)</h3>' +
+        '<p style="font-size:12px;color:var(--c-text-muted);margin-bottom:12px;">Grant broad access, then deny everyone <em>except</em> the authorized group for each type.</p>' +
         '<table class="ref-cheat-table">' +
           '<thead><tr><th>Domain</th><th>Type</th><th>State</th><th>Participant</th><th>Applies To</th><th>Permission</th></tr></thead>' +
           '<tbody>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">WTObject</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Design Group</td><td style="color:#94a3b8;">Participant</td><td style="color:#22c55e;">Grant Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">WTDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Documentation</td><td style="color:#f59e0b;font-weight:600;">All Except</td><td style="color:#ef4444;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">EPMDocument</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Engineering</td><td style="color:#f59e0b;font-weight:600;">All Except</td><td style="color:#ef4444;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">InvoiceDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Invoice</td><td style="color:#f59e0b;font-weight:600;">All Except</td><td style="color:#ef4444;">Deny Read</td></tr>' +
-            '<tr><td style="color:#e2e8f0;">Default</td><td style="color:#e2e8f0;">ContractDoc</td><td style="color:#94a3b8;">All</td><td style="color:#e2e8f0;">Contract</td><td style="color:#f59e0b;font-weight:600;">All Except</td><td style="color:#ef4444;">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">WTObject</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Design Group</td><td style="color:var(--c-text-muted);">Participant</td><td style="color:var(--c-accent);">Grant Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">WTDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Documentation</td><td style="color:var(--c-warning);font-weight:600;">All Except</td><td style="color:var(--c-danger);">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">EPMDocument</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Engineering</td><td style="color:var(--c-warning);font-weight:600;">All Except</td><td style="color:var(--c-danger);">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">InvoiceDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Invoice</td><td style="color:var(--c-warning);font-weight:600;">All Except</td><td style="color:var(--c-danger);">Deny Read</td></tr>' +
+            '<tr><td style="color:var(--c-text);">Default</td><td style="color:var(--c-text);">ContractDoc</td><td style="color:var(--c-text-muted);">All</td><td style="color:var(--c-text);">Contract</td><td style="color:var(--c-warning);font-weight:600;">All Except</td><td style="color:var(--c-danger);">Deny Read</td></tr>' +
           '</tbody>' +
         '</table>' +
-        '<div class="ref-scenario-fix" style="margin-top:12px;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04);">' +
-          '<strong style="color:#f59e0b;">Trade-off:</strong> Fixes the multi-group conflict from Solution 1, but uses more rules and is harder to read. New subgroups still inherit broad access. Grant-only (Solution 3) is simpler.' +
+        '<div class="ref-scenario-fix" style="margin-top:12px;border-color:var(--c-warning-020);background:var(--c-warning-004);">' +
+          '<strong style="color:var(--c-warning);">Trade-off:</strong> Fixes the multi-group conflict from Solution 1, but uses more rules and is harder to read. New subgroups still inherit broad access. Grant-only (Solution 3) is simpler.' +
         '</div>'
     }
   };
@@ -759,85 +764,85 @@
     numbering: {
       label: "Part Numbering",
       content:
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do your business units share a part numbering scheme?</div>' +
-        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:8px;">Do your business units share a part numbering scheme?</div>' +
+        '<div style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;margin-bottom:14px;">' +
           'Part numbering is one of the first decisions that shapes your context architecture. If all BUs draw from a single numbering pool, you need coordination at the Org or Library level to prevent collisions. If each BU has its own prefix or scheme, separate Products provide natural isolation.' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
-            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Shared Numbering</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Use a shared Library to manage the numbering pool. Products pull from the Library via links. Best with Option 3 (Libraries as Backbone).</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-green-015);background:var(--c-ref-green-008);">' +
+            '<div style="font-weight:700;color:var(--c-ref-green);font-size:12px;margin-bottom:4px;">Shared Numbering</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Use a shared Library to manage the numbering pool. Products pull from the Library via links. Best with Option 3 (Libraries as Backbone).</div>' +
           '</div>' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Separate Numbering</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Each Product manages its own sequence. Simpler to configure, but cross-BU assemblies require manual coordination. Works with Option 1 or 3.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-orange-015);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Separate Numbering</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Each Product manages its own sequence. Simpler to configure, but cross-BU assemblies require manual coordination. Works with Option 1 or 3.</div>' +
           '</div>' +
         '</div>' +
         '<div class="ref-scenario-fix">' +
-          '<strong style="color:#22c55e;">Recommendation:</strong> Even with separate numbering schemes, use a Library to hold released/shared parts. The numbering scheme lives in the Product where parts are created.' +
+          '<strong style="color:var(--c-accent);">Recommendation:</strong> Even with separate numbering schemes, use a Library to hold released/shared parts. The numbering scheme lives in the Product where parts are created.' +
         '</div>'
     },
     approvals: {
       label: "Approval Processes",
       content:
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do all BUs follow the same change approval workflow?</div>' +
-        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:8px;">Do all BUs follow the same change approval workflow?</div>' +
+        '<div style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;margin-bottom:14px;">' +
           'The change management workflows (PR, CR, CN, CA) can be shared across all BUs or customized per BU. Shared workflows are simpler to maintain but may not fit BUs with different regulatory or governance requirements.' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
-            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Shared Workflows</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">All BUs use the same lifecycle and workflow definitions. Context teams differentiate <em>who</em> participates, not <em>what</em> the process is. Simplest to maintain.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-green-015);background:var(--c-ref-green-008);">' +
+            '<div style="font-weight:700;color:var(--c-ref-green);font-size:12px;margin-bottom:4px;">Shared Workflows</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">All BUs use the same lifecycle and workflow definitions. Context teams differentiate <em>who</em> participates, not <em>what</em> the process is. Simplest to maintain.</div>' +
           '</div>' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Unique Workflows per BU</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Requires override team templates at Org level or custom workflow definitions. Needed when BUs have different approval gates or regulatory requirements.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-orange-015);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Unique Workflows per BU</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Requires override team templates at Org level or custom workflow definitions. Needed when BUs have different approval gates or regulatory requirements.</div>' +
           '</div>' +
         '</div>' +
         '<div class="ref-scenario-fix">' +
-          '<strong style="color:#22c55e;">Recommendation:</strong> Start with shared workflows and context teams. Only customize workflows when a BU has a genuinely different process (e.g., aerospace vs. commercial). Context teams handle most differences.' +
+          '<strong style="color:var(--c-accent);">Recommendation:</strong> Start with shared workflows and context teams. Only customize workflows when a BU has a genuinely different process (e.g., aerospace vs. commercial). Context teams handle most differences.' +
         '</div>'
     },
     sharing: {
       label: "Cross-BU Sharing",
       content:
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do BUs need to share parts and assemblies?</div>' +
-        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:8px;">Do BUs need to share parts and assemblies?</div>' +
+        '<div style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;margin-bottom:14px;">' +
           'Cross-BU sharing is the strongest driver toward using Libraries. If BU-A needs to reference released parts from BU-B, a shared Library provides the natural exchange point. Without Libraries, sharing requires manual export/import or complex link management.' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
-            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Sharing Required</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Use shared Libraries as the backbone (Option 3). Released parts promote to the Library where any BU can reference them. Context teams on the Library control who can read/modify.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-green-015);background:var(--c-ref-green-008);">' +
+            '<div style="font-weight:700;color:var(--c-ref-green);font-size:12px;margin-bottom:4px;">Sharing Required</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Use shared Libraries as the backbone (Option 3). Released parts promote to the Library where any BU can reference them. Context teams on the Library control who can read/modify.</div>' +
           '</div>' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Fully Independent</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Separate Products per BU with no shared Library (Option 1). Simpler but creates silos. Consider whether "independent today" stays true as the company grows.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-orange-015);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Fully Independent</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Separate Products per BU with no shared Library (Option 1). Simpler but creates silos. Consider whether "independent today" stays true as the company grows.</div>' +
           '</div>' +
         '</div>' +
         '<div class="ref-scenario-fix">' +
-          '<strong style="color:#22c55e;">Recommendation:</strong> Even if BUs seem independent now, create a shared Library for common components (fasteners, standards, packaging). This prevents duplication and enables future collaboration.' +
+          '<strong style="color:var(--c-accent);">Recommendation:</strong> Even if BUs seem independent now, create a shared Library for common components (fasteners, standards, packaging). This prevents duplication and enables future collaboration.' +
         '</div>'
     },
     visibility: {
       label: "WIP Visibility",
       content:
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Should BUs see each other\'s work-in-progress?</div>' +
-        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:8px;">Should BUs see each other\'s work-in-progress?</div>' +
+        '<div style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;margin-bottom:14px;">' +
           'WIP visibility is controlled by context teams and access control policies at the Product level. By default, users not on a Product\'s context team are Guests with limited or no access. This provides natural BU isolation without complex policy rules.' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
-            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Released Only</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Each BU\'s Product has only its own groups on the context team. Other BUs are Guests with no access to WIP. Released data shared via Libraries only.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-green-015);background:var(--c-ref-green-008);">' +
+            '<div style="font-weight:700;color:var(--c-ref-green);font-size:12px;margin-bottom:4px;">Released Only</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Each BU\'s Product has only its own groups on the context team. Other BUs are Guests with no access to WIP. Released data shared via Libraries only.</div>' +
           '</div>' +
-          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
-            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Cross-BU Visibility</div>' +
-            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Add other BU groups to the context team with read-only roles (Guest or a custom read role). Enables collaboration but reduces isolation. Use access control policies to fine-tune.</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid var(--c-ref-orange-015);background:var(--c-ref-orange-005);">' +
+            '<div style="font-weight:700;color:var(--c-ref-orange);font-size:12px;margin-bottom:4px;">Cross-BU Visibility</div>' +
+            '<div style="font-size:11px;color:var(--c-text-muted);line-height:1.6;">Add other BU groups to the context team with read-only roles (Guest or a custom read role). Enables collaboration but reduces isolation. Use access control policies to fine-tune.</div>' +
           '</div>' +
         '</div>' +
         '<div class="ref-scenario-fix">' +
-          '<strong style="color:#22c55e;">Recommendation:</strong> Default to "released only" visibility. This is the simplest to configure and maintain. Add cross-BU visibility selectively if specific collaboration needs arise.' +
+          '<strong style="color:var(--c-accent);">Recommendation:</strong> Default to "released only" visibility. This is the simplest to configure and maintain. Add cross-BU visibility selectively if specific collaboration needs arise.' +
         '</div>'
     }
   };
@@ -887,30 +892,30 @@
 
     // --- Recommended Architecture Diagram ---
     html += '<div style="margin-bottom:24px;">' +
-      '<div class="ref-section-title">Recommended Architecture (Option 3)</div>' +
+      '<div class="ref-section-title">Recommended Architecture (Option 3)' + speechBtn('WCAI.speech.speakElement(this.nextElementSibling || this)') + '</div>' +
       '<div class="ref-arch-diagram">' +
         // Org level
-        '<div style="text-align:center;padding:14px 20px;background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.3);border-radius:8px;margin-bottom:12px;">' +
-          '<div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:4px;">Organization</div>' +
-          '<div style="font-size:11px;color:#94a3b8;">Shared groups, roles, preferences, association rules, access policies</div>' +
+        '<div style="text-align:center;padding:14px 20px;background:var(--c-purple-008);border:1px solid var(--c-purple-020);border-radius:8px;margin-bottom:12px;">' +
+          '<div style="font-size:13px;font-weight:700;color:var(--c-ref-purple);margin-bottom:4px;">Organization</div>' +
+          '<div style="font-size:11px;color:var(--c-text-muted);">Shared groups, roles, preferences, association rules, access policies</div>' +
         '</div>' +
         // Connector
         '<div style="display:flex;justify-content:center;margin-bottom:12px;">' +
-          '<div style="width:1px;height:20px;background:#475569;"></div>' +
+          '<div style="width:1px;height:20px;background:var(--c-border-hover);"></div>' +
         '</div>' +
         // Products + Library row
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
-          '<div style="padding:14px;background:rgba(78,168,222,0.06);border:1px solid rgba(78,168,222,0.3);border-radius:8px;text-align:center;">' +
-            '<div style="font-size:12px;font-weight:700;color:#4ea8de;margin-bottom:4px;">BU-A Product</div>' +
-            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Design work, WIP<br>Context team: BU-A groups</div>' +
+          '<div style="padding:14px;background:var(--c-ref-blue-008);border:1px solid var(--c-ref-blue-015);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--c-ref-blue);margin-bottom:4px;">BU-A Product</div>' +
+            '<div style="font-size:10px;color:var(--c-text-muted);line-height:1.5;">Design work, WIP<br>Context team: BU-A groups</div>' +
           '</div>' +
-          '<div style="padding:14px;background:rgba(126,201,143,0.06);border:1px solid rgba(126,201,143,0.3);border-radius:8px;text-align:center;">' +
-            '<div style="font-size:12px;font-weight:700;color:#7ec98f;margin-bottom:4px;">Shared Library</div>' +
-            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Released parts, standards<br>Context team: cross-BU admins</div>' +
+          '<div style="padding:14px;background:var(--c-ref-green-008);border:1px solid var(--c-ref-green-015);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--c-ref-green);margin-bottom:4px;">Shared Library</div>' +
+            '<div style="font-size:10px;color:var(--c-text-muted);line-height:1.5;">Released parts, standards<br>Context team: cross-BU admins</div>' +
           '</div>' +
-          '<div style="padding:14px;background:rgba(244,162,97,0.06);border:1px solid rgba(244,162,97,0.3);border-radius:8px;text-align:center;">' +
-            '<div style="font-size:12px;font-weight:700;color:#f4a261;margin-bottom:4px;">BU-B Product</div>' +
-            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Design work, WIP<br>Context team: BU-B groups</div>' +
+          '<div style="padding:14px;background:var(--c-ref-orange-005);border:1px solid var(--c-ref-orange-015);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--c-ref-orange);margin-bottom:4px;">BU-B Product</div>' +
+            '<div style="font-size:10px;color:var(--c-text-muted);line-height:1.5;">Design work, WIP<br>Context team: BU-B groups</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -918,8 +923,8 @@
 
     // --- Planning Questions Tabs ---
     html += '<div style="margin-bottom:24px;">' +
-      '<div class="ref-section-title">Planning Questions</div>' +
-      '<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Answer these four questions to determine which architecture option fits your organization.</p>' +
+      '<div class="ref-section-title">Planning Questions' + speechBtn('WCAI.speech.speakElement(this.nextElementSibling || this)') + '</div>' +
+      '<p style="font-size:12px;color:var(--c-text-muted);margin-bottom:12px;">Answer these four questions to determine which architecture option fits your organization.</p>' +
       renderPlanQTabs() +
     '</div>';
 
@@ -935,34 +940,34 @@
         '</tr></thead>' +
         '<tbody>' +
           '<tr>' +
-            '<td style="color:#e2e8f0;font-weight:600;">Setup Complexity</td>' +
-            '<td style="color:#22c55e;">Low -- one Product per BU</td>' +
-            '<td style="color:#ef4444;">High -- domain design needed</td>' +
-            '<td style="color:#f59e0b;">Medium -- Library + Products</td>' +
+            '<td style="color:var(--c-text);font-weight:600;">Setup Complexity</td>' +
+            '<td style="color:var(--c-accent);">Low -- one Product per BU</td>' +
+            '<td style="color:var(--c-danger);">High -- domain design needed</td>' +
+            '<td style="color:var(--c-warning);">Medium -- Library + Products</td>' +
           '</tr>' +
           '<tr>' +
-            '<td style="color:#e2e8f0;font-weight:600;">Cross-BU Sharing</td>' +
-            '<td style="color:#ef4444;">Difficult -- manual links</td>' +
-            '<td style="color:#f59e0b;">Possible -- same Product</td>' +
-            '<td style="color:#22c55e;">Natural -- via Library</td>' +
+            '<td style="color:var(--c-text);font-weight:600;">Cross-BU Sharing</td>' +
+            '<td style="color:var(--c-danger);">Difficult -- manual links</td>' +
+            '<td style="color:var(--c-warning);">Possible -- same Product</td>' +
+            '<td style="color:var(--c-accent);">Natural -- via Library</td>' +
           '</tr>' +
           '<tr>' +
-            '<td style="color:#e2e8f0;font-weight:600;">Independent Processes</td>' +
-            '<td style="color:#22c55e;">Full independence</td>' +
-            '<td style="color:#f59e0b;">Shared workflows</td>' +
-            '<td style="color:#22c55e;">Independent per Product</td>' +
+            '<td style="color:var(--c-text);font-weight:600;">Independent Processes</td>' +
+            '<td style="color:var(--c-accent);">Full independence</td>' +
+            '<td style="color:var(--c-warning);">Shared workflows</td>' +
+            '<td style="color:var(--c-accent);">Independent per Product</td>' +
           '</tr>' +
           '<tr>' +
-            '<td style="color:#e2e8f0;font-weight:600;">Access Control</td>' +
-            '<td style="color:#22c55e;">Simple -- context teams</td>' +
-            '<td style="color:#ef4444;">Complex -- domain policies</td>' +
-            '<td style="color:#22c55e;">Simple -- context teams</td>' +
+            '<td style="color:var(--c-text);font-weight:600;">Access Control</td>' +
+            '<td style="color:var(--c-accent);">Simple -- context teams</td>' +
+            '<td style="color:var(--c-danger);">Complex -- domain policies</td>' +
+            '<td style="color:var(--c-accent);">Simple -- context teams</td>' +
           '</tr>' +
           '<tr>' +
-            '<td style="color:#e2e8f0;font-weight:600;">Maintenance</td>' +
-            '<td style="color:#22c55e;">Low per BU</td>' +
-            '<td style="color:#ef4444;">High -- policy upkeep</td>' +
-            '<td style="color:#f59e0b;">Medium -- Library governance</td>' +
+            '<td style="color:var(--c-text);font-weight:600;">Maintenance</td>' +
+            '<td style="color:var(--c-accent);">Low per BU</td>' +
+            '<td style="color:var(--c-danger);">High -- policy upkeep</td>' +
+            '<td style="color:var(--c-warning);">Medium -- Library governance</td>' +
           '</tr>' +
         '</tbody>' +
       '</table>' +
@@ -992,8 +997,8 @@
 
     // --- Insight callout ---
     html += '<div class="ref-insight">' +
-      '<div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:6px;">Key Insight</div>' +
-      '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--c-ref-purple);margin-bottom:6px;">Key Insight</div>' +
+      '<div style="font-size:12.5px;color:var(--c-text-secondary);line-height:1.7;">' +
         'Most multi-BU implementations land on <strong>Option 3 -- Libraries as the common backbone with Products per BU</strong>. ' +
         'This pattern leverages context teams at the Product level for per-BU participant assignment while sharing a single Organization for groups, roles, and preferences. ' +
         'It is the approach best supported by Windchill\'s context hierarchy and the one PTC\'s training material implicitly recommends.' +
@@ -1057,12 +1062,12 @@
       '<p class="sec-desc">Load users and group assignments into Windchill dev VMs via CSV files and the LoadFromFile utility. This bypasses the UI for initial setup of test environments.</p>';
 
     // --- Warning Callout ---
-    html += '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:16px;margin-bottom:24px;">' +
-      '<div style="font-size:13px;font-weight:700;color:#ef4444;margin-bottom:6px;">Dev / Test VMs Only</div>' +
-      '<div style="font-size:12px;color:#fca5a5;line-height:1.7;">' +
+    html += '<div style="background:var(--c-danger-008);border:1px solid var(--c-danger-030);border-radius:8px;padding:16px;margin-bottom:24px;">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--c-danger);margin-bottom:6px;">Dev / Test VMs Only' + speechBtn('WCAI.speech.speakElement(this.parentElement)') + '</div>' +
+      '<div style="font-size:12px;color:var(--c-danger-light);line-height:1.7;">' +
         'This process is intended for <strong>Windchill dev VMs with internal Apache DS</strong> (non-LDAP). ' +
         'In production environments, users are managed through LDAP/Active Directory integration. ' +
-        'All loaded users receive the default password <code style="background:rgba(239,68,68,0.15);padding:2px 6px;border-radius:3px;font-size:11px;">Password1</code> -- change immediately after loading.' +
+        'All loaded users receive the default password <code style="background:var(--c-danger-015);padding:2px 6px;border-radius:3px;font-size:11px;">Password1</code> -- change immediately after loading.' +
       '</div>' +
     '</div>';
 
@@ -1083,7 +1088,7 @@
         'Step 2: CSV2XML',
         'Convert CSV files to Windchill-loadable XML format.',
         '<p>Windchill\'s <code>LoadFromFile</code> utility requires XML input. The <code>CSV2XML</code> tool converts your CSV files:</p>' +
-        '<p style="font-family:monospace;font-size:11px;background:rgba(245,158,97,0.08);padding:8px;border-radius:4px;margin:8px 0;">' +
+        '<p style="font-family:monospace;font-size:11px;background:var(--c-ref-orange-005);padding:8px;border-radius:4px;margin:8px 0;">' +
           'windchill wt.load.CSV2XML -d users.csv -o users.xml<br>' +
           'windchill wt.load.CSV2XML -d user_groups.csv -o user_groups.xml' +
         '</p>' +
@@ -1094,7 +1099,7 @@
         'Step 3: LoadFromFile',
         'Import the XML files into your Windchill organization.',
         '<p>Load users first, then group assignments (order matters):</p>' +
-        '<p style="font-family:monospace;font-size:11px;background:rgba(34,197,94,0.08);padding:8px;border-radius:4px;margin:8px 0;">' +
+        '<p style="font-family:monospace;font-size:11px;background:var(--c-accent-008);padding:8px;border-radius:4px;margin:8px 0;">' +
           'windchill wt.load.LoadFromFile -d users.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg<br>' +
           'windchill wt.load.LoadFromFile -d user_groups.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg' +
         '</p>' +
@@ -1103,7 +1108,7 @@
     '</div>';
 
     // --- CSV Format Reference ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">CSV Format Reference</h2>';
+    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">CSV Format Reference</h2>';
     html += '<table class="ref-cheat-table">' +
       '<thead><tr>' +
         '<th>File</th>' +
@@ -1128,7 +1133,7 @@
     '</table>';
 
     // --- Complete Workflow ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Complete Workflow</h2>';
+    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Complete Workflow' + speechBtn('WCAI.speech.speakElement(this.nextElementSibling || this)') + '</h2>';
     html += '<div class="ref-scenario-steps">' +
       scenarioStep(1, 'blue', '<strong>Prepare CSV files</strong> -- Generate users.csv and user_groups.csv from the wizard (download below) or create them manually following the PTC header format.') +
       scenarioStep(2, 'blue', '<strong>Create groups first</strong> -- Groups <em>cannot</em> be loaded via CSV. Create all groups manually in Windchill: [Org] &rarr; Utilities &rarr; Participant Administration &rarr; Internal Groups &rarr; Create.') +
@@ -1139,7 +1144,7 @@
     '</div>';
 
     // --- Common Mistakes ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Common Mistakes</h2>';
+    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Common Mistakes</h2>';
     html += '<div class="ref-mistakes-grid">' +
       misconceptionCard(
         '"Groups are auto-created when loading user_groups.csv"',
@@ -1164,12 +1169,12 @@
     '</div>';
 
     // --- Download Section ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Download Bulk User Files</h2>';
+    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Download Bulk User Files</h2>';
 
     if (people.length > 0) {
       // Preview table
-      html += '<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:16px;">' +
-        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:12px;">' + people.length + ' user' + (people.length !== 1 ? 's' : '') + ' defined in your config</div>' +
+      html += '<div style="background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:12px;">' + people.length + ' user' + (people.length !== 1 ? 's' : '') + ' defined in your config</div>' +
         '<table class="ref-cheat-table" style="margin:0;">' +
           '<thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Group</th></tr></thead>' +
           '<tbody>';
@@ -1178,7 +1183,7 @@
         var uname = p.username || p.id;
         var fname = p.name || uname;
         var email = p.email || (uname + '@example.com');
-        var gname = p.group ? (groupIndex[p.group] || p.group) : '<span style="color:#64748b;">none</span>';
+        var gname = p.group ? (groupIndex[p.group] || p.group) : '<span style="color:var(--c-text-dim);">none</span>';
         html += '<tr>' +
           '<td style="font-family:monospace;font-size:11px;">' + uname + '</td>' +
           '<td>' + fname + '</td>' +
@@ -1190,15 +1195,15 @@
 
       // Download button
       html += '<div style="text-align:center;margin-bottom:24px;">' +
-        '<button onclick="WCAI.app.downloadBulkUserZip()" style="padding:12px 32px;font-size:14px;font-weight:700;color:#fff;background:#22c55e;border:none;border-radius:8px;cursor:pointer;">' +
+        '<button onclick="WCAI.app.downloadBulkUserZip()" style="padding:12px 32px;font-size:14px;font-weight:700;color:#fff;background:var(--c-accent);border:none;border-radius:8px;cursor:pointer;">' +
           'Download Bulk User ZIP' +
         '</button>' +
-        '<div style="font-size:11px;color:#64748b;margin-top:8px;">Contains users.csv, user_groups.csv, and load_users.bat</div>' +
+        '<div style="font-size:11px;color:var(--c-text-dim);margin-top:8px;">Contains users.csv, user_groups.csv, and load_users.bat</div>' +
       '</div>';
     } else {
-      html += '<div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:16px;margin-bottom:24px;">' +
-        '<div style="font-size:13px;font-weight:600;color:#eab308;margin-bottom:4px;">No people defined yet</div>' +
-        '<div style="font-size:12px;color:#fde68a;line-height:1.6;">' +
+      html += '<div style="background:var(--c-warning-008);border:1px solid var(--c-warning-020);border-radius:8px;padding:16px;margin-bottom:24px;">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--c-warning-vivid);margin-bottom:4px;">No people defined yet</div>' +
+        '<div style="font-size:12px;color:var(--c-warning-lighter);line-height:1.6;">' +
           'Add people in the <strong>Change Management</strong> wizard (Step 3: People) or load the example config, then return here to download bulk user files.' +
         '</div>' +
       '</div>';
@@ -1206,8 +1211,8 @@
 
     // --- Insight callout ---
     html += '<div class="ref-insight">' +
-      '<div style="font-size:13px;font-weight:700;color:#60a5fa;margin-bottom:6px;">One-Time Setup Convenience</div>' +
-      '<div style="font-size:12px;color:#94a3b8;line-height:1.7;">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--c-info-light);margin-bottom:6px;">One-Time Setup Convenience</div>' +
+      '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.7;">' +
         'Bulk user loading is a one-time convenience for standing up dev/test environments. Once your VM is configured, manage users through the Windchill UI or connect LDAP for ongoing user administration. ' +
         'The generated batch script includes <code>--dry-run</code> support so you can preview commands before executing them.' +
       '</div>' +

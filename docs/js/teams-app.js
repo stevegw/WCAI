@@ -50,13 +50,15 @@
   }
 
   function bp(title, body) {
+    var speechHtml = (WCAI.speech && WCAI.speech.isSupported()) ?
+      ' <button class="speech-btn" onclick="event.stopPropagation();WCAI.speech.speakElement(this.closest(\'.bp-body\'))" title="Read aloud">&#9654;</button>' : '';
     return '<div class="bp-expander">' +
       '<div class="bp-header">' +
         '<div class="bp-icon">?</div>' +
         '<div class="bp-header-text">' + title + '</div>' +
         '<span class="bp-arrow">&#9654;</span>' +
       '</div>' +
-      '<div class="bp-body">' + body + '</div>' +
+      '<div class="bp-body">' + speechHtml + body + '</div>' +
     '</div>';
   }
 
@@ -105,14 +107,14 @@
           '<input value="' + esc(org.domain) + '" placeholder="e.g. acme.com" oninput="WCAI.teamsApp.setOrg(\'domain\',this.value)"></div>' +
       '</div>' +
       '<div style="margin-top:20px;">' +
-        '<h3 style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">Organization Administrators</h3>' +
-        '<p style="font-size:12px;color:#64748b;margin-bottom:4px;">Select users who will serve as organization administrators. Org admins can create groups, configure association rules, and manage access control.</p>' +
+        '<h3 style="font-size:14px;font-weight:700;color:var(--c-text-primary);margin-bottom:4px;">Organization Administrators</h3>' +
+        '<p style="font-size:12px;color:var(--c-text-dim);margin-bottom:4px;">Select users who will serve as organization administrators. Org admins can create groups, configure association rules, and manage access control.</p>' +
         adminHtml +
       '</div>' +
       bp('Why do you need Organization Administrators?',
         '<p>Initially, <strong>no organization administrator is defined</strong> for a new org context. Without one, only Site Admins can perform org-level tasks.</p>' +
         '<p>Organization Administrators can:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
           '<li>Create and manage <strong>user-defined groups</strong></li>' +
           '<li>Configure <strong>change association rules</strong></li>' +
           '<li>Manage <strong>access control policies</strong></li>' +
@@ -196,7 +198,7 @@
     if (dir.type === 'ldap') {
       html += bp('LDAP Configuration Notes',
         '<p>When using LDAP, Windchill periodically synchronizes user and group information from the directory server. Key configuration items:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
           '<li><strong>LDAP Server URL</strong> -- e.g., ldap://ldap.acme.com:389 or ldaps://ldap.acme.com:636</li>' +
           '<li><strong>Base DN</strong> -- The root of the search tree, e.g., dc=acme,dc=com</li>' +
           '<li><strong>Bind DN</strong> -- Service account for Windchill to query the directory</li>' +
@@ -315,7 +317,7 @@
           '<div class="field"><label>Description</label><input value="' + esc(g.description || '') + '" placeholder="Product engineering team" oninput="WCAI.teamsApp.setGroup(' + i + ',\'description\',this.value)"></div>' +
         '</div>';
       if (members.length > 0) {
-        html += '<div style="margin-top:6px;font-size:11px;color:#64748b;">Members: ' + memberNames + '</div>';
+        html += '<div style="margin-top:6px;font-size:11px;color:var(--c-text-dim);">Members: ' + memberNames + '</div>';
       }
       html += '</div>';
     }
@@ -324,7 +326,7 @@
       '<button class="add-btn" onclick="WCAI.teamsApp.addGroup()">+ Add Group</button>' +
       bp('Best Practice: Groups at Organization Level',
         '<p>PTC recommends defining groups at the <strong>organization level</strong> whenever possible. This ensures:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
           '<li>Groups are available across all Products and Libraries in the org</li>' +
           '<li>Group membership can be managed from a single location</li>' +
           '<li>Role assignments in context teams reference the same groups</li>' +
@@ -369,7 +371,7 @@
 
     html += bp('Windchill License Hierarchy',
       '<p>Windchill uses a three-tier licensing system:</p>' +
-      '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+      '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
         '<li><strong>License Profiles</strong> -- Maintained by PTC, define which actions each license allows. Cannot be altered.</li>' +
         '<li><strong>License Groups</strong> -- Administrators add users to license groups to grant entitlements.</li>' +
         '<li><strong>License Names</strong> -- Your purchased license keys (Named User or Active Daily User).</li>' +
@@ -395,7 +397,7 @@
         var licenseInfo = '';
         if (currentLicense && tm.LICENSE_TYPES[currentLicense]) {
           var ltype = tm.LICENSE_TYPES[currentLicense];
-          var color = ltype.change_capable ? '#22c55e' : '#f59e0b';
+          var color = ltype.change_capable ? 'var(--c-accent)' : 'var(--c-warning)';
           licenseInfo = '<div style="margin-top:4px;font-size:11px;color:' + color + ';">' +
             (ltype.change_capable ? 'Change management capable' : 'Limited -- may not support all change actions') +
             '</div>';
@@ -404,12 +406,12 @@
         html += '<div class="card" style="padding:12px 16px;">' +
           '<div style="display:flex;align-items:center;gap:12px;">' +
             '<div style="flex:1;">' +
-              '<div style="font-size:13px;font-weight:600;color:#e2e8f0;">' + esc(p.name || p.username) + '</div>' +
-              '<div style="font-size:11px;color:#64748b;">' + esc(p.username) + (p.group ? ' / ' + esc(p.group) : '') + '</div>' +
+              '<div style="font-size:13px;font-weight:600;color:var(--c-text);">' + esc(p.name || p.username) + '</div>' +
+              '<div style="font-size:11px;color:var(--c-text-dim);">' + esc(p.username) + (p.group ? ' / ' + esc(p.group) : '') + '</div>' +
               licenseInfo +
             '</div>' +
             '<div style="width:220px;">' +
-              '<select style="width:100%;padding:8px 10px;background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:12px;font-family:inherit;" onchange="WCAI.teamsApp.setLicense(\'' + esc(pid) + '\',this.value)">' + opts + '</select>' +
+              '<select style="width:100%;padding:8px 10px;background:var(--c-bg-base);border:1px solid var(--c-border);border-radius:5px;color:var(--c-text);font-size:12px;font-family:inherit;" onchange="WCAI.teamsApp.setLicense(\'' + esc(pid) + '\',this.value)">' + opts + '</select>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -537,7 +539,7 @@
         validationHtml = '<div class="success-box" style="margin-bottom:24px;"><h3>Validation Passed</h3><p>No issues found. Review the checklist below for deployment steps.</p></div>';
       } else {
         validationHtml = '<div style="margin-bottom:24px;">' +
-          '<h3 style="font-size:14px;color:#f1f5f9;margin-bottom:8px;">' + errors.length + ' errors, ' + warnings.length + ' warnings, ' + infos.length + ' info</h3>';
+          '<h3 style="font-size:14px;color:var(--c-text-primary);margin-bottom:8px;">' + errors.length + ' errors, ' + warnings.length + ' warnings, ' + infos.length + ' info</h3>';
         for (var ii = 0; ii < issues.length; ii++) {
           var iss = issues[ii];
           validationHtml += '<div class="issue ' + iss.severity + '">' +
@@ -681,7 +683,7 @@
       // === Section 5: Create Groups ===
       html += beginSection('ts5', 5, 'Create Groups and Add Users', 'Groups cannot be created via CLI -- manual step only', 'manual');
       html += bp('Best Practice: Users -> Groups -> Roles',
-        '<p style="text-align:center;font-size:14px;font-weight:700;color:#22c55e;padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
+        '<p style="text-align:center;font-size:14px;font-weight:700;color:var(--c-accent);padding:8px 0;">Users &rarr; Groups &rarr; Roles</p>' +
         '<p><strong>Never assign individual users directly to roles.</strong> Always go through groups for maintainability, LDAP alignment, and auditability.</p>'
       );
       for (var gci = 0; gci < groups.length; gci++) {
@@ -707,7 +709,7 @@
       html += beginSection('ts6', 6, 'Configure Context Teams', 'Assign groups to team roles per Product/Library', 'manual');
       html += bp('Context Team Role Resolution',
         '<p>When Windchill needs to determine who fills a role, it resolves in this order:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
           '<li>1. Context team (Product/Library level) -- highest priority</li>' +
           '<li>2. Team template (Site level) -- fallback if not in context team</li>' +
           '<li>3. Shared team (Org level) -- for cross-context roles</li>' +
@@ -735,7 +737,7 @@
       html += beginSection('ts7', 7, 'Verify Access Control Policies', 'Ensure permissions align with team role assignments', 'manual');
       html += bp('Access Control Overview',
         '<p>Access control policies determine what actions users can perform on objects at each lifecycle state. After setting up teams and roles, verify:</p>' +
-        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:#cbd5e1;">' +
+        '<ul style="margin:8px 0 8px 16px;font-size:12px;color:var(--c-text-secondary);">' +
           '<li>Members can view and create objects in their context</li>' +
           '<li>Role-specific permissions match workflow requirements</li>' +
           '<li>Guest access is appropriately restricted</li>' +
@@ -795,8 +797,8 @@
       WCAI.app._saveTeams();
     } catch (err) {
       document.getElementById("main").innerHTML =
-        '<h1 style="color:#ef4444;">Teams Checklist Error</h1>' +
-        '<pre style="color:#fca5a5;white-space:pre-wrap;">' + err.message + '\n\n' + err.stack + '</pre>' +
+        '<h1 style="color:var(--c-danger);">Teams Checklist Error</h1>' +
+        '<pre style="color:var(--c-danger-light);white-space:pre-wrap;">' + err.message + '\n\n' + err.stack + '</pre>' +
         navButtons();
     }
   }

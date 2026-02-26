@@ -241,13 +241,18 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .sidebar-overlay.active { display: block; }
 
 @media (max-width: 768px) {
+  body { overflow: auto; height: auto; }
+  .app { flex-direction: column; height: auto; min-height: 100vh; }
   .mobile-menu-btn { display: flex; }
   .sb-collapse-btn { display: none !important; }
-  .sidebar { transform: translateX(-260px); transition: transform 0.25s ease; width: 260px !important; }
-  .sidebar.mobile-open { transform: translateX(0); }
-  .main { margin-left: 0 !important; padding: 52px 16px 32px; }
-  .app.sidebar-collapsed .sidebar { width: 260px; transform: translateX(-260px); }
-  .app.sidebar-collapsed .main { margin-left: 0; }
+  /* Sidebar: off-screen by default, slides in as overlay */
+  .sidebar,
+  .app.sidebar-collapsed .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px !important; transform: translateX(-260px); transition: transform 0.25s ease; z-index: 100; }
+  .sidebar.mobile-open { transform: translateX(0) !important; }
+  /* Main: always full-width on mobile */
+  .main,
+  .app.sidebar-collapsed .main { margin-left: 0 !important; padding: 52px 16px 32px; height: auto; min-height: 100vh; overflow: visible; }
+  /* Undo all sidebar-collapsed overrides on mobile */
   .app.sidebar-collapsed .sb-logo-text,
   .app.sidebar-collapsed .sb-tabs,
   .app.sidebar-collapsed .sb-status,

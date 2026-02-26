@@ -13,16 +13,21 @@
 
   var STEPS_REFERENCE = [
     { id: "ref_access_model", label: "Access Model" },
-    { id: "ref_access_control", label: "Access Control" }
+    { id: "ref_access_control", label: "Access Control" },
+    { id: "ref_impl_planning", label: "Implementation Planning" },
+    { id: "ref_bulk_users", label: "Bulk User Loading" }
   ];
 
   var activeScenario = "new_user";
   var activeAcStrategy = "domain";
   var activeCaseStudy = "grant";
+  var activePlanQ = "numbering";
 
   function render(stepIndex) {
     if (stepIndex === 0) renderAccessModel();
     else if (stepIndex === 1) renderAccessControl();
+    else if (stepIndex === 2) renderImplPlanning();
+    else if (stepIndex === 3) renderBulkUserLoading();
   }
 
   // ============================================================
@@ -747,12 +752,481 @@
   }
 
   // ============================================================
+  // PAGE 3: Implementation Planning (Multi-BU)
+  // ============================================================
+
+  var PLAN_QUESTIONS = {
+    numbering: {
+      label: "Part Numbering",
+      content:
+        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do your business units share a part numbering scheme?</div>' +
+        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+          'Part numbering is one of the first decisions that shapes your context architecture. If all BUs draw from a single numbering pool, you need coordination at the Org or Library level to prevent collisions. If each BU has its own prefix or scheme, separate Products provide natural isolation.' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
+            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Shared Numbering</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Use a shared Library to manage the numbering pool. Products pull from the Library via links. Best with Option 3 (Libraries as Backbone).</div>' +
+          '</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
+            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Separate Numbering</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Each Product manages its own sequence. Simpler to configure, but cross-BU assemblies require manual coordination. Works with Option 1 or 3.</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ref-scenario-fix">' +
+          '<strong style="color:#22c55e;">Recommendation:</strong> Even with separate numbering schemes, use a Library to hold released/shared parts. The numbering scheme lives in the Product where parts are created.' +
+        '</div>'
+    },
+    approvals: {
+      label: "Approval Processes",
+      content:
+        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do all BUs follow the same change approval workflow?</div>' +
+        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+          'The change management workflows (PR, CR, CN, CA) can be shared across all BUs or customized per BU. Shared workflows are simpler to maintain but may not fit BUs with different regulatory or governance requirements.' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
+            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Shared Workflows</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">All BUs use the same lifecycle and workflow definitions. Context teams differentiate <em>who</em> participates, not <em>what</em> the process is. Simplest to maintain.</div>' +
+          '</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
+            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Unique Workflows per BU</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Requires override team templates at Org level or custom workflow definitions. Needed when BUs have different approval gates or regulatory requirements.</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ref-scenario-fix">' +
+          '<strong style="color:#22c55e;">Recommendation:</strong> Start with shared workflows and context teams. Only customize workflows when a BU has a genuinely different process (e.g., aerospace vs. commercial). Context teams handle most differences.' +
+        '</div>'
+    },
+    sharing: {
+      label: "Cross-BU Sharing",
+      content:
+        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Do BUs need to share parts and assemblies?</div>' +
+        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+          'Cross-BU sharing is the strongest driver toward using Libraries. If BU-A needs to reference released parts from BU-B, a shared Library provides the natural exchange point. Without Libraries, sharing requires manual export/import or complex link management.' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
+            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Sharing Required</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Use shared Libraries as the backbone (Option 3). Released parts promote to the Library where any BU can reference them. Context teams on the Library control who can read/modify.</div>' +
+          '</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
+            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Fully Independent</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Separate Products per BU with no shared Library (Option 1). Simpler but creates silos. Consider whether "independent today" stays true as the company grows.</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ref-scenario-fix">' +
+          '<strong style="color:#22c55e;">Recommendation:</strong> Even if BUs seem independent now, create a shared Library for common components (fasteners, standards, packaging). This prevents duplication and enables future collaboration.' +
+        '</div>'
+    },
+    visibility: {
+      label: "WIP Visibility",
+      content:
+        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Should BUs see each other\'s work-in-progress?</div>' +
+        '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;margin-bottom:14px;">' +
+          'WIP visibility is controlled by context teams and access control policies at the Product level. By default, users not on a Product\'s context team are Guests with limited or no access. This provides natural BU isolation without complex policy rules.' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(126,201,143,0.3);background:rgba(126,201,143,0.04);">' +
+            '<div style="font-weight:700;color:#7ec98f;font-size:12px;margin-bottom:4px;">Released Only</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Each BU\'s Product has only its own groups on the context team. Other BUs are Guests with no access to WIP. Released data shared via Libraries only.</div>' +
+          '</div>' +
+          '<div style="padding:12px;border-radius:6px;border:1px solid rgba(244,162,97,0.3);background:rgba(244,162,97,0.04);">' +
+            '<div style="font-weight:700;color:#f4a261;font-size:12px;margin-bottom:4px;">Cross-BU Visibility</div>' +
+            '<div style="font-size:11px;color:#94a3b8;line-height:1.6;">Add other BU groups to the context team with read-only roles (Guest or a custom read role). Enables collaboration but reduces isolation. Use access control policies to fine-tune.</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ref-scenario-fix">' +
+          '<strong style="color:#22c55e;">Recommendation:</strong> Default to "released only" visibility. This is the simplest to configure and maintain. Add cross-BU visibility selectively if specific collaboration needs arise.' +
+        '</div>'
+    }
+  };
+
+  function renderImplPlanning() {
+    var html = '';
+
+    html += '<h1 class="sec-title">Multi-BU Implementation Planning</h1>' +
+      '<p class="sec-desc">How to structure Windchill context when your organization has multiple business units. Covers three architectural options, key planning questions, and common anti-patterns.</p>';
+
+    // --- Three Concept Cards ---
+    html += '<div class="ref-concepts">' +
+      conceptCard(
+        'blue',
+        'Option 1: Products per BU',
+        'Separate Products for each business unit under a single Organization.',
+        '<p>Each BU gets its own Product(s) with dedicated context teams, folders, and access control. Clean separation with independent processes.</p>' +
+        '<ul>' +
+          '<li>Own teams, folders, and access policies per BU</li>' +
+          '<li>Independent change processes and workflows</li>' +
+          '<li>Cross-BU sharing requires links or a shared Library</li>' +
+        '</ul>'
+      ) +
+      conceptCard(
+        'orange',
+        'Option 2: Domain Separation',
+        'Shared Products with domain branches separating BU data.',
+        '<p>All BUs work in shared Products, with administrative domains used to partition data and permissions by BU.</p>' +
+        '<ul>' +
+          '<li>Shared product structure, partitioned by domains</li>' +
+          '<li>Complex access control policy configuration</li>' +
+          '<li>Best when BUs share product lines but need data isolation</li>' +
+        '</ul>'
+      ) +
+      conceptCard(
+        'green',
+        'Option 3: Libraries + Products',
+        'Libraries for shared/released data, Products per BU for design work.',
+        '<p>The <strong>recommended</strong> pattern for most multi-BU implementations. Combines the best of both worlds.</p>' +
+        '<ul>' +
+          '<li>Libraries hold released/common parts shared across BUs</li>' +
+          '<li>Products per BU scope design work and WIP</li>' +
+          '<li>Context teams enable per-BU participant assignment</li>' +
+        '</ul>'
+      ) +
+    '</div>';
+
+    // --- Recommended Architecture Diagram ---
+    html += '<div style="margin-bottom:24px;">' +
+      '<div class="ref-section-title">Recommended Architecture (Option 3)</div>' +
+      '<div class="ref-arch-diagram">' +
+        // Org level
+        '<div style="text-align:center;padding:14px 20px;background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.3);border-radius:8px;margin-bottom:12px;">' +
+          '<div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:4px;">Organization</div>' +
+          '<div style="font-size:11px;color:#94a3b8;">Shared groups, roles, preferences, association rules, access policies</div>' +
+        '</div>' +
+        // Connector
+        '<div style="display:flex;justify-content:center;margin-bottom:12px;">' +
+          '<div style="width:1px;height:20px;background:#475569;"></div>' +
+        '</div>' +
+        // Products + Library row
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
+          '<div style="padding:14px;background:rgba(78,168,222,0.06);border:1px solid rgba(78,168,222,0.3);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:#4ea8de;margin-bottom:4px;">BU-A Product</div>' +
+            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Design work, WIP<br>Context team: BU-A groups</div>' +
+          '</div>' +
+          '<div style="padding:14px;background:rgba(126,201,143,0.06);border:1px solid rgba(126,201,143,0.3);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:#7ec98f;margin-bottom:4px;">Shared Library</div>' +
+            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Released parts, standards<br>Context team: cross-BU admins</div>' +
+          '</div>' +
+          '<div style="padding:14px;background:rgba(244,162,97,0.06);border:1px solid rgba(244,162,97,0.3);border-radius:8px;text-align:center;">' +
+            '<div style="font-size:12px;font-weight:700;color:#f4a261;margin-bottom:4px;">BU-B Product</div>' +
+            '<div style="font-size:10px;color:#94a3b8;line-height:1.5;">Design work, WIP<br>Context team: BU-B groups</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    // --- Planning Questions Tabs ---
+    html += '<div style="margin-bottom:24px;">' +
+      '<div class="ref-section-title">Planning Questions</div>' +
+      '<p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Answer these four questions to determine which architecture option fits your organization.</p>' +
+      renderPlanQTabs() +
+    '</div>';
+
+    // --- Decision Matrix ---
+    html += '<div style="margin-bottom:24px;">' +
+      '<div class="ref-section-title">Decision Matrix</div>' +
+      '<table class="ref-cheat-table">' +
+        '<thead><tr>' +
+          '<th>Factor</th>' +
+          '<th>Option 1: Products per BU</th>' +
+          '<th>Option 2: Domains</th>' +
+          '<th>Option 3: Libraries + Products</th>' +
+        '</tr></thead>' +
+        '<tbody>' +
+          '<tr>' +
+            '<td style="color:#e2e8f0;font-weight:600;">Setup Complexity</td>' +
+            '<td style="color:#22c55e;">Low -- one Product per BU</td>' +
+            '<td style="color:#ef4444;">High -- domain design needed</td>' +
+            '<td style="color:#f59e0b;">Medium -- Library + Products</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td style="color:#e2e8f0;font-weight:600;">Cross-BU Sharing</td>' +
+            '<td style="color:#ef4444;">Difficult -- manual links</td>' +
+            '<td style="color:#f59e0b;">Possible -- same Product</td>' +
+            '<td style="color:#22c55e;">Natural -- via Library</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td style="color:#e2e8f0;font-weight:600;">Independent Processes</td>' +
+            '<td style="color:#22c55e;">Full independence</td>' +
+            '<td style="color:#f59e0b;">Shared workflows</td>' +
+            '<td style="color:#22c55e;">Independent per Product</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td style="color:#e2e8f0;font-weight:600;">Access Control</td>' +
+            '<td style="color:#22c55e;">Simple -- context teams</td>' +
+            '<td style="color:#ef4444;">Complex -- domain policies</td>' +
+            '<td style="color:#22c55e;">Simple -- context teams</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td style="color:#e2e8f0;font-weight:600;">Maintenance</td>' +
+            '<td style="color:#22c55e;">Low per BU</td>' +
+            '<td style="color:#ef4444;">High -- policy upkeep</td>' +
+            '<td style="color:#f59e0b;">Medium -- Library governance</td>' +
+          '</tr>' +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+
+    // --- Anti-patterns ---
+    html += '<div style="margin-bottom:24px;">' +
+      '<div class="ref-section-title">Anti-patterns / Common Mistakes</div>' +
+      '<div class="ref-mistakes-grid" style="grid-template-columns:1fr 1fr 1fr;">' +
+        misconceptionCard(
+          'Over-consolidating',
+          'Putting all BUs in a single Product seems simpler, but leads to access control nightmares. Every team sees everything, role assignments become unwieldy, and change processes cannot be differentiated per BU.',
+          'Use separate Products per BU for natural isolation.'
+        ) +
+        misconceptionCard(
+          'Over-separating',
+          'Creating separate Organizations per BU completely prevents cross-BU collaboration. Users, groups, and released parts cannot be shared across org boundaries.',
+          'Stay in one Organization; use Products and Libraries to separate.'
+        ) +
+        misconceptionCard(
+          'Ignoring Libraries',
+          'Using only Products and sharing parts via links or copying misses Windchill\'s built-in mechanism for shared released data. This causes duplication and version control issues.',
+          'Use Libraries as the backbone for released/common data.'
+        ) +
+      '</div>' +
+    '</div>';
+
+    // --- Insight callout ---
+    html += '<div class="ref-insight">' +
+      '<div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:6px;">Key Insight</div>' +
+      '<div style="font-size:12.5px;color:#cbd5e1;line-height:1.7;">' +
+        'Most multi-BU implementations land on <strong>Option 3 -- Libraries as the common backbone with Products per BU</strong>. ' +
+        'This pattern leverages context teams at the Product level for per-BU participant assignment while sharing a single Organization for groups, roles, and preferences. ' +
+        'It is the approach best supported by Windchill\'s context hierarchy and the one PTC\'s training material implicitly recommends.' +
+      '</div>' +
+    '</div>';
+
+    // Nav buttons
+    html += renderNavButtons();
+
+    document.getElementById("main").innerHTML = html;
+  }
+
+  function renderPlanQTabs() {
+    var tabsHtml = '<div class="ref-flow-tabs">';
+    for (var id in PLAN_QUESTIONS) {
+      var pq = PLAN_QUESTIONS[id];
+      tabsHtml += '<button class="ref-flow-tab ref-pq-tab' + (id === activePlanQ ? ' active' : '') + '" data-planq="' + id + '" onclick="WCAI.referenceApp.switchPlanQ(\'' + id + '\')">' +
+        pq.label + '</button>';
+    }
+    tabsHtml += '</div>';
+    tabsHtml += '<div class="ref-flow-panels">';
+    for (var sid in PLAN_QUESTIONS) {
+      tabsHtml += '<div class="ref-flow-panel ref-pq-panel' + (sid === activePlanQ ? ' active' : '') + '" data-pqpanel="' + sid + '">' + PLAN_QUESTIONS[sid].content + '</div>';
+    }
+    tabsHtml += '</div>';
+    return tabsHtml;
+  }
+
+  function switchPlanQ(id) {
+    activePlanQ = id;
+    highlightActivePlanQ();
+  }
+
+  function highlightActivePlanQ() {
+    var tabs = document.querySelectorAll('.ref-pq-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute('data-planq') === activePlanQ) tabs[i].classList.add('active');
+      else tabs[i].classList.remove('active');
+    }
+    var panels = document.querySelectorAll('.ref-pq-panel');
+    for (var j = 0; j < panels.length; j++) {
+      if (panels[j].getAttribute('data-pqpanel') === activePlanQ) panels[j].classList.add('active');
+      else panels[j].classList.remove('active');
+    }
+  }
+
+  // ============================================================
+  // PAGE 4: Bulk User Loading
+  // ============================================================
+  function renderBulkUserLoading() {
+    var html = '';
+    var cfg = WCAI.app._getConfig();
+    var people = (cfg && cfg.people) ? cfg.people : [];
+    var groups = (cfg && cfg.groups) ? cfg.groups : [];
+    var groupIndex = {};
+    for (var gi = 0; gi < groups.length; gi++) {
+      groupIndex[groups[gi].id] = groups[gi].name || groups[gi].id;
+    }
+
+    html += '<h1 class="sec-title">Bulk User Loading</h1>' +
+      '<p class="sec-desc">Load users and group assignments into Windchill dev VMs via CSV files and the LoadFromFile utility. This bypasses the UI for initial setup of test environments.</p>';
+
+    // --- Warning Callout ---
+    html += '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:16px;margin-bottom:24px;">' +
+      '<div style="font-size:13px;font-weight:700;color:#ef4444;margin-bottom:6px;">Dev / Test VMs Only</div>' +
+      '<div style="font-size:12px;color:#fca5a5;line-height:1.7;">' +
+        'This process is intended for <strong>Windchill dev VMs with internal Apache DS</strong> (non-LDAP). ' +
+        'In production environments, users are managed through LDAP/Active Directory integration. ' +
+        'All loaded users receive the default password <code style="background:rgba(239,68,68,0.15);padding:2px 6px;border-radius:3px;font-size:11px;">Password1</code> -- change immediately after loading.' +
+      '</div>' +
+    '</div>';
+
+    // --- Three Concept Cards ---
+    html += '<div class="ref-concepts">' +
+      conceptCard(
+        'blue',
+        'Step 1: CSV Files',
+        'Two CSV files define users and their group memberships.',
+        '<p><strong>users.csv</strong> -- One row per user with username, full name, email, organization, and default password. ' +
+        'Uses the PTC <code>#User</code> header format.</p>' +
+        '<p><strong>user_groups.csv</strong> -- One row per user-group assignment. Maps each user to their Windchill internal group ' +
+        'using the PTC <code>#UserGroup</code> header format.</p>' +
+        '<p>Both files use comma-separated values with Windows line endings.</p>'
+      ) +
+      conceptCard(
+        'orange',
+        'Step 2: CSV2XML',
+        'Convert CSV files to Windchill-loadable XML format.',
+        '<p>Windchill\'s <code>LoadFromFile</code> utility requires XML input. The <code>CSV2XML</code> tool converts your CSV files:</p>' +
+        '<p style="font-family:monospace;font-size:11px;background:rgba(245,158,97,0.08);padding:8px;border-radius:4px;margin:8px 0;">' +
+          'windchill wt.load.CSV2XML -d users.csv -o users.xml<br>' +
+          'windchill wt.load.CSV2XML -d user_groups.csv -o user_groups.xml' +
+        '</p>' +
+        '<p>Run these commands in the Windchill shell. The output XML files are created in the same directory.</p>'
+      ) +
+      conceptCard(
+        'green',
+        'Step 3: LoadFromFile',
+        'Import the XML files into your Windchill organization.',
+        '<p>Load users first, then group assignments (order matters):</p>' +
+        '<p style="font-family:monospace;font-size:11px;background:rgba(34,197,94,0.08);padding:8px;border-radius:4px;margin:8px 0;">' +
+          'windchill wt.load.LoadFromFile -d users.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg<br>' +
+          'windchill wt.load.LoadFromFile -d user_groups.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg' +
+        '</p>' +
+        '<p>Users are created in the specified organization. Group assignments link them to existing groups.</p>'
+      ) +
+    '</div>';
+
+    // --- CSV Format Reference ---
+    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">CSV Format Reference</h2>';
+    html += '<table class="ref-cheat-table">' +
+      '<thead><tr>' +
+        '<th>File</th>' +
+        '<th>Header Row</th>' +
+        '<th>Row Format</th>' +
+        '<th>Notes</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+        '<tr>' +
+          '<td><strong>users.csv</strong></td>' +
+          '<td style="font-family:monospace;font-size:10px;">#User,user,newUser,webServerID,fullName,LastName,Locale,Email,...,Organization,...,ignore,password</td>' +
+          '<td>One row per user</td>' +
+          '<td>webServerID = login username; password defaults to Password1</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td><strong>user_groups.csv</strong></td>' +
+          '<td style="font-family:monospace;font-size:10px;">#UserGroup,user,groupName,userName</td>' +
+          '<td>One row per user-group pair</td>' +
+          '<td>Groups must already exist in Windchill; groupName is the display name</td>' +
+        '</tr>' +
+      '</tbody>' +
+    '</table>';
+
+    // --- Complete Workflow ---
+    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Complete Workflow</h2>';
+    html += '<div class="ref-scenario-steps">' +
+      scenarioStep(1, 'blue', '<strong>Prepare CSV files</strong> -- Generate users.csv and user_groups.csv from the wizard (download below) or create them manually following the PTC header format.') +
+      scenarioStep(2, 'blue', '<strong>Create groups first</strong> -- Groups <em>cannot</em> be loaded via CSV. Create all groups manually in Windchill: [Org] &rarr; Utilities &rarr; Participant Administration &rarr; Internal Groups &rarr; Create.') +
+      scenarioStep(3, 'orange', '<strong>Convert CSV to XML</strong> -- Run <code>windchill wt.load.CSV2XML</code> for each CSV file. This produces the XML format that LoadFromFile expects.') +
+      scenarioStep(4, 'green', '<strong>Load users</strong> -- Run <code>windchill wt.load.LoadFromFile</code> on users.xml first. Users must exist before they can be assigned to groups.') +
+      scenarioStep(5, 'green', '<strong>Load group assignments</strong> -- Run <code>windchill wt.load.LoadFromFile</code> on user_groups.xml. This adds each user to their designated group.') +
+      scenarioStep(6, 'purple', '<strong>Post-load steps</strong> -- Change default passwords, assign users to license groups (Site &rarr; License Management), and verify group membership in Participant Administration.') +
+    '</div>';
+
+    // --- Common Mistakes ---
+    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Common Mistakes</h2>';
+    html += '<div class="ref-mistakes-grid">' +
+      misconceptionCard(
+        '"Groups are auto-created when loading user_groups.csv"',
+        'Groups <strong>cannot</strong> be created via LoadFromFile or CSV2XML. They must be created manually in the Windchill UI before loading group assignments. If a group referenced in user_groups.csv does not exist, the assignment silently fails.',
+        'Always create groups manually first, then load group assignments.'
+      ) +
+      misconceptionCard(
+        '"This replaces LDAP for production"',
+        'Bulk CSV loading is for <strong>dev/test VMs only</strong> that use Windchill\'s internal Apache DS directory. Production environments should use LDAP or Active Directory integration for user management, which provides SSO, password policy enforcement, and automatic provisioning.',
+        'CSV loading = dev VMs only. Production = LDAP/AD.'
+      ) +
+      misconceptionCard(
+        '"Users can log in immediately after loading"',
+        'Loaded users have accounts but <strong>no license group membership</strong>. Without a license assignment (PTC Author, PTC PDMLink, etc.), users cannot access Windchill. License assignment is a separate manual step: Site &rarr; Utilities &rarr; License Management.',
+        'Load users, then assign to license groups, then they can log in.'
+      ) +
+      misconceptionCard(
+        '"The default password is permanent"',
+        'All CSV-loaded users get the password <strong>Password1</strong>. This is a temporary default for initial setup only. Administrators should force a password change on first login or manually update passwords immediately after loading.',
+        'Change all default passwords immediately after loading.'
+      ) +
+    '</div>';
+
+    // --- Download Section ---
+    html += '<h2 style="font-size:16px;font-weight:700;color:#e2e8f0;margin:32px 0 16px 0;">Download Bulk User Files</h2>';
+
+    if (people.length > 0) {
+      // Preview table
+      html += '<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:12px;">' + people.length + ' user' + (people.length !== 1 ? 's' : '') + ' defined in your config</div>' +
+        '<table class="ref-cheat-table" style="margin:0;">' +
+          '<thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Group</th></tr></thead>' +
+          '<tbody>';
+      for (var pi = 0; pi < people.length; pi++) {
+        var p = people[pi];
+        var uname = p.username || p.id;
+        var fname = p.name || uname;
+        var email = p.email || (uname + '@example.com');
+        var gname = p.group ? (groupIndex[p.group] || p.group) : '<span style="color:#64748b;">none</span>';
+        html += '<tr>' +
+          '<td style="font-family:monospace;font-size:11px;">' + uname + '</td>' +
+          '<td>' + fname + '</td>' +
+          '<td style="font-size:11px;">' + email + '</td>' +
+          '<td>' + gname + '</td>' +
+        '</tr>';
+      }
+      html += '</tbody></table></div>';
+
+      // Download button
+      html += '<div style="text-align:center;margin-bottom:24px;">' +
+        '<button onclick="WCAI.app.downloadBulkUserZip()" style="padding:12px 32px;font-size:14px;font-weight:700;color:#fff;background:#22c55e;border:none;border-radius:8px;cursor:pointer;">' +
+          'Download Bulk User ZIP' +
+        '</button>' +
+        '<div style="font-size:11px;color:#64748b;margin-top:8px;">Contains users.csv, user_groups.csv, and load_users.bat</div>' +
+      '</div>';
+    } else {
+      html += '<div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:16px;margin-bottom:24px;">' +
+        '<div style="font-size:13px;font-weight:600;color:#eab308;margin-bottom:4px;">No people defined yet</div>' +
+        '<div style="font-size:12px;color:#fde68a;line-height:1.6;">' +
+          'Add people in the <strong>Change Management</strong> wizard (Step 3: People) or load the example config, then return here to download bulk user files.' +
+        '</div>' +
+      '</div>';
+    }
+
+    // --- Insight callout ---
+    html += '<div class="ref-insight">' +
+      '<div style="font-size:13px;font-weight:700;color:#60a5fa;margin-bottom:6px;">One-Time Setup Convenience</div>' +
+      '<div style="font-size:12px;color:#94a3b8;line-height:1.7;">' +
+        'Bulk user loading is a one-time convenience for standing up dev/test environments. Once your VM is configured, manage users through the Windchill UI or connect LDAP for ongoing user administration. ' +
+        'The generated batch script includes <code>--dry-run</code> support so you can preview commands before executing them.' +
+      '</div>' +
+    '</div>';
+
+    // Nav buttons
+    html += renderNavButtons();
+
+    document.getElementById("main").innerHTML = html;
+  }
+
+  // ============================================================
   // Export
   // ============================================================
   WCAI.referenceApp = {
     STEPS_REFERENCE: STEPS_REFERENCE,
     render: render,
     switchScenario: switchScenario,
-    switchCaseStudy: switchCaseStudy
+    switchCaseStudy: switchCaseStudy,
+    switchPlanQ: switchPlanQ
   };
 })();

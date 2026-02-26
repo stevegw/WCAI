@@ -194,10 +194,38 @@ Note: Some preferences (Automatic CN Creation, CN without CR, CR-to-CN Cardinali
 | Business Rules | windchill wt.load.LoadFromFile | Yes |
 | Preferences | windchill wt.pref.PrefCmd | Yes |
 | Groups/Users | N/A | No - Windchill UI only |
+| Users (dev VM only) | wt.load.LoadFromFile via CSV2XML | Yes - dev VMs only |
+| User Group Assign | wt.load.LoadFromFile via CSV2XML | Yes - dev VMs only |
 | Team Template Participants | N/A | No - Windchill UI only |
 | Context Teams | N/A | No - Windchill UI only |
 | Association Rules | N/A | No - Windchill UI only |
 | Access Control Policies | N/A | No - Windchill UI only |
+
+### Bulk User Loading (Dev VMs Only)
+
+On Windchill 13.x dev VMs using internal Apache DS (non-LDAP), users can be bulk-loaded via CSV files:
+
+**CSV Formats:**
+
+1. **users.csv** -- PTC header: `#User,user,newUser,webServerID,fullName,LastName,Locale,Email,DefiningOrgId,Organization,telephoneNumber,ignore,password`
+   - One row per user; `webServerID` = login username; default password = `Password1`
+
+2. **user_groups.csv** -- PTC header: `#UserGroup,user,groupName,userName`
+   - One row per user-group assignment; references group display name
+
+**4-Step Loading Process:**
+
+1. `windchill wt.load.CSV2XML -d users.csv -o users.xml` -- convert users CSV to XML
+2. `windchill wt.load.LoadFromFile -d users.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg` -- load users
+3. `windchill wt.load.CSV2XML -d user_groups.csv -o user_groups.xml` -- convert groups CSV to XML
+4. `windchill wt.load.LoadFromFile -d user_groups.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg` -- load assignments
+
+**Critical Constraints:**
+
+- **Groups must be created manually first** -- LoadFromFile cannot create groups, only assign users to existing ones
+- **License groups must be assigned after** -- loaded users cannot access Windchill until added to a license group (PTC Author, PTC PDMLink, etc.)
+- **Not for LDAP environments** -- this process is for dev VMs with internal Apache DS only; production uses LDAP/AD
+- **Order matters** -- users must be loaded before group assignments; groups must exist before group assignments
 
 ### Windchill Server Environment
 
@@ -206,6 +234,65 @@ Note: Some preferences (Automatic CN Creation, CN without CR, CR-to-CN Cardinali
 - Windchill shell is pre-configured - no need to source environment scripts
 - Deploy by: copy downloaded artifacts to server, open Windchill shell, cd to folder, run deploy_all.bat
 - All generated output must be **ASCII-only** - Windows console cannot render Unicode box-drawing characters
+
+### Multi-BU Context Strategy
+
+When an organization has **multiple business units** (e.g., Aerospace, Automotive, Industrial) that share a single Windchill instance, the context hierarchy must be carefully planned. There are three main approaches:
+
+| Option | Structure | Best For |
+|--------|-----------|----------|
+| **1. Separate Products per BU** | One Org, separate Products per BU | Clean separation, independent processes |
+| **2. Domain Separation** | Shared Products with domain branches per BU | Mixed teams, shared product lines |
+| **3. Libraries as Backbone** (Recommended) | Shared Libraries for released/common parts, Products per BU for design work | Most multi-BU implementations |
+
+#### Recommended Pattern: Libraries + Products per BU (Option 3)
+
+```
+Organization (shared)
+  |-- Groups, roles, preferences defined here
+  |
+  |-- BU-A Product (design work)
+  |     |-- Context team: BU-A groups assigned to change roles
+  |     |-- WIP parts, assemblies, documents
+  |
+  |-- BU-B Product (design work)
+  |     |-- Context team: BU-B groups assigned to change roles
+  |     |-- WIP parts, assemblies, documents
+  |
+  |-- Shared Library (released/common)
+        |-- Released parts shared across BUs
+        |-- Common components, standards
+```
+
+**Why this works:** Libraries are Windchill's mechanism for shared, released data. Products are scoped workspaces for design-in-progress. Context teams at the Product level enable per-BU participant assignment while sharing the same org-level groups and role definitions.
+
+#### 4 Key Planning Questions
+
+1. **Part Numbering** -- Do BUs share a numbering scheme or have independent ones? Shared numbering requires coordination at the Org or Library level. Separate schemes are easier with separate Products.
+
+2. **Approval Processes** -- Do all BUs use the same change workflow, or does each BU have unique approval gates? Shared workflows simplify maintenance; unique workflows require override team templates or workflow customization.
+
+3. **Cross-BU Sharing** -- Do BUs need to share parts and assemblies? If yes, Libraries are essential as the shared backbone. If BUs are fully independent, separate Products with no shared Library may suffice.
+
+4. **WIP Visibility** -- Should BUs see each other's work-in-progress, or only released data? Context teams and access control policies at the Product level control this. Libraries expose only released data by default.
+
+#### Anti-patterns to Avoid
+
+- **Over-consolidating**: Putting all BUs in a single Product leads to access control nightmares. Every team sees everything, role assignments become unwieldy, and change processes cannot be differentiated.
+
+- **Over-separating**: Creating completely independent Organizations per BU prevents cross-BU collaboration entirely. Users cannot be shared, groups cannot span BUs, and released parts cannot be referenced across boundaries.
+
+- **Ignoring Libraries**: Using only Products and trying to share parts via links or copying misses Windchill's built-in mechanism for shared released data. Libraries provide controlled sharing with proper access control.
+
+#### How Context Teams Enable Multi-BU
+
+Context teams are the key mechanism that makes Option 3 work. Since context teams are defined **per Product/Library**, each BU's Product can have different groups assigned to the same change management roles:
+
+- BU-A Product: `BU-A-ChangeAdmins` assigned to Change Admin I role
+- BU-B Product: `BU-B-ChangeAdmins` assigned to Change Admin I role
+- Shared Library: Both groups assigned (or a cross-BU admin group)
+
+This uses the OOTB team templates unchanged while giving each BU independent participant control.
 
 ---
 

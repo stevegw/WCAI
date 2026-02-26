@@ -226,8 +226,8 @@
           '</div>' +
           '<div style="padding:20px;background:#1e293b;border:1px solid rgba(192,132,252,0.3);border-radius:8px;cursor:pointer;" onclick="WCAI.app.switchWizard(\'reference\')">' +
             '<div style="font-size:15px;font-weight:700;color:#c084fc;margin-bottom:6px;">Reference</div>' +
-            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Learn how Windchill\'s access model works: contexts, roles, content groups, and access control policies.</div>' +
-            '<div style="margin-top:10px;font-size:11px;color:#64748b;">Interactive scenarios, cheat sheet, and common misconceptions</div>' +
+            '<div style="font-size:12px;color:#94a3b8;line-height:1.6;">Access model, access control policies, multi-BU implementation planning, and bulk user loading for dev VMs.</div>' +
+            '<div style="margin-top:10px;font-size:11px;color:#64748b;">4 pages -- Access Model, Access Control, Implementation Planning, Bulk User Loading</div>' +
           '</div>' +
         '</div>' +
         // Feature cards
@@ -573,6 +573,22 @@
     zip.generateAsync({ type: "blob" }).then(function (blob) {
       var companyName = (config.company.name || "wcai").replace(/ /g, "_").toLowerCase();
       downloadFile(companyName + "_deploy.zip", blob, "application/zip");
+    });
+  }
+
+  function downloadBulkUserZip() {
+    if (!config || !config.people || config.people.length === 0) {
+      alert("No people defined. Add people in the Change Management wizard (Step 3) first.");
+      return;
+    }
+    var zip = new JSZip();
+    zip.file("users.csv", generators.generateUsersCsv(config));
+    zip.file("user_groups.csv", generators.generateUserGroupsCsv(config));
+    zip.file("load_users.bat", generators.generateLoadUsersBat(config));
+
+    zip.generateAsync({ type: "blob" }).then(function (blob) {
+      var companyName = (config.company.name || "wcai").replace(/ /g, "_").toLowerCase();
+      downloadFile(companyName + "_bulk_users.zip", blob, "application/zip");
     });
   }
 
@@ -1483,6 +1499,7 @@
     downloadYaml: downloadYaml,
     downloadSingleFile: downloadSingleFile,
     downloadZip: downloadZip,
+    downloadBulkUserZip: downloadBulkUserZip,
     uploadYaml: uploadYaml,
     // Checklist
     toggleSection: toggleSection,

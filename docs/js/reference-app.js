@@ -33,10 +33,8 @@
   // ============================================================
   // Shared Helpers
   // ============================================================
-  function speechBtn(onclickExpr) {
-    if (!WCAI.speech || !WCAI.speech.isSupported()) return '';
-    return ' <button class="speech-btn" onclick="' + onclickExpr + '" title="Read aloud">&#9654;</button>';
-  }
+  // speechBtn removed -- narration module auto-injects section buttons
+  function speechBtn() { return ''; }
 
   function conceptCard(color, title, subtitle, body) {
     return '<div class="ref-concept-card ref-border-' + color + '">' +

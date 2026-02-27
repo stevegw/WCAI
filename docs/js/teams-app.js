@@ -50,15 +50,13 @@
   }
 
   function bp(title, body) {
-    var speechHtml = (WCAI.speech && WCAI.speech.isSupported()) ?
-      ' <button class="speech-btn" onclick="event.stopPropagation();WCAI.speech.speakElement(this.closest(\'.bp-body\'))" title="Read aloud">&#9654;</button>' : '';
     return '<div class="bp-expander">' +
       '<div class="bp-header">' +
         '<div class="bp-icon">?</div>' +
         '<div class="bp-header-text">' + title + '</div>' +
         '<span class="bp-arrow">&#9654;</span>' +
       '</div>' +
-      '<div class="bp-body">' + speechHtml + body + '</div>' +
+      '<div class="bp-body">' + body + '</div>' +
     '</div>';
   }
 

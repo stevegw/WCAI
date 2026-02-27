@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WCAI -- Windchill Config AI Wizard</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -67,18 +67,18 @@
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
-<!-- WCAI Modules (order matters) -->
-<script src="js/model.js"></script>
-<script src="js/loader.js"></script>
-<script src="js/validators.js"></script>
-<script src="js/generators.js"></script>
-<script src="js/teams-model.js"></script>
-<script src="js/teams-validators.js"></script>
-<script src="js/teams-app.js"></script>
-<script src="js/reference-app.js"></script>
-<script src="js/speech.js"></script>
-<script src="js/notepad.js"></script>
-<script src="js/app.js"></script>
+<!-- WCAI Modules (order matters) — bump ?v= to bust browser cache -->
+<script src="js/model.js?v=2"></script>
+<script src="js/loader.js?v=2"></script>
+<script src="js/validators.js?v=2"></script>
+<script src="js/generators.js?v=2"></script>
+<script src="js/teams-model.js?v=2"></script>
+<script src="js/teams-validators.js?v=2"></script>
+<script src="js/teams-app.js?v=3"></script>
+<script src="js/reference-app.js?v=3"></script>
+<script src="js/speech.js?v=5"></script>
+<script src="js/notepad.js?v=2"></script>
+<script src="js/app.js?v=3"></script>
 
 <!-- Boot -->
 <script>WCAI.app.init();</script>

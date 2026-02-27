@@ -55,7 +55,6 @@
   var calibratedCPM = DEFAULT_CPM;
 
   // UI
-  var bar = null;
   var sectionBtns = [];
   var clickHandler = null;
   var collapsed = false;
@@ -108,8 +107,8 @@
   }
 
   function populateVoiceSelect() {
-    var sel = bar && bar.querySelector("#narr-voice");
-    if (!sel || !voices.length) return;
+    // No bar UI -- voices managed internally
+    return;
     sel.innerHTML = "";
     for (var i = 0; i < voices.length; i++) {
       var o = document.createElement("option");
@@ -359,7 +358,6 @@
     calibratedCPM = DEFAULT_CPM;
 
     state = "playing";
-    showBar(chunks[0].text);
     speakNextChunk();
   }
 
@@ -405,7 +403,6 @@
 
       currentChunk++;
       if (currentChunk < chunks.length) {
-        updateLabel(chunks[currentChunk].text);
         speakNextChunk();
       } else {
         onDone();
@@ -419,8 +416,6 @@
 
     // Start timer fallback (in case onboundary doesn't fire)
     if (!boundaryFired) startChunkTimer();
-
-    updateLabel(chunk.text);
 
     // Speak synchronously to preserve Chrome's user-gesture context.
     // The synchronous work between cancel() and here provides enough gap.
@@ -438,8 +433,6 @@
     textMap = [];
     fullText = "";
     narrationRoot = null;
-    if (bar) bar.classList.remove("speaking");
-    updatePlayIcon();
   }
 
   function onDone() {
@@ -448,9 +441,6 @@
     state = "stopped";
     chunks = [];
     currentChunk = 0;
-    if (bar) bar.classList.remove("speaking");
-    updateLabel("");
-    updatePlayIcon();
   }
 
   /* ── Public Playback Controls ─────────────────────────────── */
@@ -471,7 +461,6 @@
     synth.pause();
     state = "paused";
     pauseStartTime = Date.now();
-    updatePlayIcon();
   }
 
   function resume() {
@@ -479,7 +468,6 @@
     synth.resume();
     state = "playing";
     pausedDuration += Date.now() - pauseStartTime;
-    updatePlayIcon();
   }
 
   function togglePlayPause() {
@@ -574,120 +562,53 @@
     localStorage.setItem(STORAGE_RATE, rate);
   }
 
-  /* ── Collapse ─────────────────────────────────────────────── */
+  /* ── Toggle (microphone icon in sidebar) ────────────────── */
   function toggleCollapse() {
     collapsed = !collapsed;
     localStorage.setItem(STORAGE_COLLAPSED, collapsed ? "1" : "0");
 
-    if (!bar) return;
-
     if (collapsed) {
-      // Stop any active narration
       stopNarration();
-      bar.classList.add("collapsed");
       removeClickHandler();
-      // Reset cursor on main
+      removeSectionButtons();
       var main = document.getElementById("main");
       if (main) main.style.cursor = "";
     } else {
-      bar.classList.remove("collapsed");
       setupClickHandler();
+      injectSectionButtons();
     }
 
-    // Flip the chevron icon
-    var icon = bar.querySelector("#narr-toggle-icon");
-    if (icon) {
-      icon.setAttribute("d", collapsed ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7");
+    updateToggleBtn();
+  }
+
+  function updateToggleBtn() {
+    var btn = document.getElementById("narr-toggle-btn");
+    if (!btn) return;
+    if (collapsed) {
+      btn.classList.remove("active");
+      btn.title = "Enable narration";
+    } else {
+      btn.classList.add("active");
+      btn.title = "Disable narration";
     }
   }
 
-  /* ── Control Bar ──────────────────────────────────────────── */
+  /* ── Init ──────────────────────────────────────────────────── */
   function init() {
     if (!isSupported()) return;
 
     var savedRate = parseFloat(localStorage.getItem(STORAGE_RATE));
     if (savedRate && !isNaN(savedRate)) rate = savedRate;
 
-    // Restore collapsed state
-    collapsed = localStorage.getItem(STORAGE_COLLAPSED) === "1";
+    // Restore collapsed state (default: collapsed/off)
+    var saved = localStorage.getItem(STORAGE_COLLAPSED);
+    collapsed = saved === null ? true : saved === "1";
 
     loadVoices();
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
 
-    // Build bar
-    bar = document.createElement("div");
-    bar.className = "narr-bar";
-    bar.id = "narr-bar";
-
-    var rateOpts = "";
-    for (var i = 0; i < RATES.length; i++) {
-      rateOpts += '<option value="' + RATES[i] + '"' + (RATES[i] === rate ? " selected" : "") + '>' + RATES[i] + 'x</option>';
-    }
-
-    bar.innerHTML =
-      '<div class="narr-bar-inner">' +
-        // Toggle button -- always visible
-        '<button class="narr-toggle" id="narr-toggle" onclick="WCAI.speech.toggleCollapse()" title="Toggle narration bar">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path id="narr-toggle-icon" d="M19 9l-7 7-7-7"/></svg>' +
-        '</button>' +
-        // Collapsible content
-        '<div class="narr-content" id="narr-content">' +
-          '<button class="narr-btn narr-page" onclick="WCAI.speech.readPage()" title="Read entire page">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>' +
-            ' Read Page' +
-          '</button>' +
-          '<select class="narr-select" id="narr-voice" onchange="WCAI.speech.setVoice(this.value)" title="Voice"></select>' +
-          '<select class="narr-select narr-rate" id="narr-rate" onchange="WCAI.speech.setRate(this.value)" title="Speed">' +
-            rateOpts +
-          '</select>' +
-          '<div class="narr-playback">' +
-            '<div class="narr-divider"></div>' +
-            '<button class="narr-btn narr-play" id="narr-playpause" onclick="WCAI.speech.togglePlayPause()" title="Play / Pause">' +
-              '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path id="narr-play-icon" d="M8 5v14l11-7z"/></svg>' +
-            '</button>' +
-            '<button class="narr-btn narr-stop" onclick="WCAI.speech.stop()" title="Stop">' +
-              '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>' +
-            '</button>' +
-            '<div class="narr-label" id="narr-label"></div>' +
-          '</div>' +
-          '<div class="narr-spacer"></div>' +
-          '<span class="narr-hint">Click any text to narrate from there</span>' +
-        '</div>' +
-      '</div>';
-
-    document.body.appendChild(bar);
-    if (collapsed) {
-      bar.classList.add("collapsed");
-      var icon = bar.querySelector("#narr-toggle-icon");
-      if (icon) icon.setAttribute("d", "M5 15l7-7 7 7");
-    }
-    populateVoiceSelect();
+    updateToggleBtn();
     if (!collapsed) setupClickHandler();
-  }
-
-  /* ── Bar UI ───────────────────────────────────────────────── */
-  function showBar(text) {
-    if (!bar) return;
-    bar.classList.add("speaking");
-    updateLabel(text);
-    updatePlayIcon();
-  }
-
-  function updateLabel(text) {
-    var el = bar && bar.querySelector("#narr-label");
-    if (!el) return;
-    if (!text) { el.textContent = ""; return; }
-    el.textContent = text.length > 70 ? text.substring(0, 70) + "..." : text;
-  }
-
-  function updatePlayIcon() {
-    var icon = bar && bar.querySelector("#narr-play-icon");
-    if (!icon) return;
-    if (state === "playing") {
-      icon.setAttribute("d", "M6 4h4v16H6zM14 4h4v16h-4z");
-    } else {
-      icon.setAttribute("d", "M8 5v14l11-7z");
-    }
   }
 
   /* ── Section Buttons ──────────────────────────────────────── */

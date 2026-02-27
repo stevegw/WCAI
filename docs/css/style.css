@@ -181,6 +181,12 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .theme-toggle { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-dim); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
 .theme-toggle:hover { border-color: var(--c-border-hover); color: var(--c-text-muted); background: var(--c-bg-surface-hover); }
 
+/* Narration toggle (microphone) */
+.narr-toggle-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; padding: 0; }
+.narr-toggle-btn:hover { border-color: var(--c-border-hover); color: var(--c-text-muted); background: var(--c-bg-surface-hover); }
+.narr-toggle-btn.active { border-color: var(--c-accent-030); color: var(--c-accent); background: var(--c-accent-008); }
+.narr-toggle-btn.active:hover { background: var(--c-accent-015); }
+
 /* Sidebar collapse button (desktop) */
 .sb-collapse-btn { width: 100%; padding: 6px 20px; border: none; background: transparent; color: var(--c-text-dim); cursor: pointer; font-size: 16px; text-align: left; transition: all 0.15s; display: none; }
 .sb-collapse-btn:hover { color: var(--c-text-muted); background: var(--c-bg-surface-hover); }
@@ -227,7 +233,8 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .app.sidebar-collapsed .sb-status,
 .app.sidebar-collapsed .sb-actions,
 .app.sidebar-collapsed .sb-nav li .nav-label,
-.app.sidebar-collapsed .theme-toggle { display: none; }
+.app.sidebar-collapsed .theme-toggle,
+.app.sidebar-collapsed .narr-toggle-btn { display: none; }
 .app.sidebar-collapsed .sb-logo { padding: 0 0 16px; justify-content: center; }
 .app.sidebar-collapsed .sb-logo h2 { font-size: 12px; }
 .app.sidebar-collapsed .sb-collapse-btn { padding: 6px 0; text-align: center; }
@@ -258,7 +265,8 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
   .app.sidebar-collapsed .sb-status,
   .app.sidebar-collapsed .sb-actions,
   .app.sidebar-collapsed .sb-nav li .nav-label,
-  .app.sidebar-collapsed .theme-toggle { display: unset; }
+  .app.sidebar-collapsed .theme-toggle,
+  .app.sidebar-collapsed .narr-toggle-btn { display: unset; }
   .app.sidebar-collapsed .sb-logo { padding: 0 20px 20px; justify-content: flex-start; }
   .app.sidebar-collapsed .sb-logo h2 { font-size: 15px; }
   .app.sidebar-collapsed .sb-nav li { padding: 10px 20px; justify-content: flex-start; gap: 10px; }
@@ -513,75 +521,18 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .ref-arch-diagram { background: var(--c-bg-base); border: 1px solid var(--c-border); border-radius: 8px; padding: 20px; }
 
 /* ============================================================
-   Narration Bar & Section Buttons
+   Narration (no bottom bar -- toggle via microphone icon in sidebar)
    ============================================================ */
-/* Sticky bar at bottom of viewport -- always visible */
-.narr-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 900; background: var(--c-bg-surface); border-top: 1px solid var(--c-border); transition: box-shadow 0.25s ease; }
-.narr-bar.speaking { box-shadow: 0 -4px 16px rgba(0,0,0,0.2); }
-.narr-bar-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; max-width: 1200px; margin: 0 auto; }
-
-/* Toggle button */
-.narr-toggle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-dim); cursor: pointer; flex-shrink: 0; transition: all 0.15s; padding: 0; }
-.narr-toggle:hover { border-color: var(--c-accent); color: var(--c-accent); }
-.narr-toggle svg { transition: transform 0.2s ease; }
-
-/* Collapsible content wrapper */
-.narr-content { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; transition: opacity 0.2s ease; }
-
-/* Collapsed state */
-.narr-bar.collapsed .narr-content { display: none; }
-.narr-bar.collapsed { background: var(--c-bg-surface); }
-.narr-bar.collapsed .narr-bar-inner { padding: 4px 16px; }
-
-/* Buttons inside bar */
-.narr-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.15s; padding: 6px 8px; font-size: 12px; white-space: nowrap; }
-.narr-btn:hover { border-color: var(--c-accent); color: var(--c-accent); background: var(--c-accent-004); }
-.narr-btn.narr-play { width: 36px; height: 36px; border-radius: 50%; padding: 0; background: var(--c-accent-010); border-color: var(--c-accent-030); color: var(--c-accent); }
-.narr-btn.narr-play:hover { background: var(--c-accent-020); }
-.narr-btn.narr-stop { border-color: var(--c-border); }
-.narr-btn.narr-stop:hover { border-color: var(--c-danger); color: var(--c-danger); }
-.narr-btn.narr-page { background: var(--c-accent-008); border-color: var(--c-accent-030); color: var(--c-accent); font-weight: 600; padding: 6px 12px; }
-.narr-btn.narr-page:hover { background: var(--c-accent-015); }
-
-.narr-divider { width: 1px; height: 24px; background: var(--c-border); flex-shrink: 0; }
-.narr-spacer { flex: 1; }
-
-/* Playback-only controls: hidden when idle, visible when speaking */
-.narr-playback { display: none; align-items: center; gap: 8px; }
-.narr-bar.speaking .narr-playback { display: flex; }
-
-/* Current sentence label */
-.narr-label { font-size: 11px; color: var(--c-text-dim); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 40px; }
-
-/* Voice & speed selects */
-.narr-select { appearance: auto; background: var(--c-bg-base); color: var(--c-text-secondary); border: 1px solid var(--c-border); border-radius: 4px; padding: 4px 6px; font-size: 11px; max-width: 180px; cursor: pointer; }
-.narr-select:focus { border-color: var(--c-accent); outline: none; }
-.narr-select.narr-rate { max-width: 60px; }
-
 /* Section play buttons auto-injected next to headings */
 .narr-section-btn { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: var(--c-text-dim); cursor: pointer; margin-left: 6px; vertical-align: middle; transition: all 0.15s; opacity: 0; flex-shrink: 0; }
 *:hover > .narr-section-btn, .narr-section-btn:focus { opacity: 1; }
 .narr-section-btn:hover { color: var(--c-accent); background: var(--c-accent-008); border-color: var(--c-accent-030); }
 
-/* Highlight the section being read */
-.narr-active { outline: 2px solid var(--c-accent-030); outline-offset: 4px; border-radius: 4px; transition: outline-color 0.3s; }
-
-/* Hint text */
-.narr-hint { font-size: 10px; color: var(--c-text-dim); white-space: nowrap; }
-
 /* Word highlight overlay (positioned by JS) */
 .narr-word-overlay { position: absolute; pointer-events: none; background: rgba(250, 204, 21, 0.40); border-radius: 2px; transition: top 0.08s ease, left 0.08s ease, width 0.08s ease; z-index: 50; }
 
-/* Hide old speech-btn remnants if any survive in cached HTML */
+/* Hide old speech-btn remnants */
 .speech-btn { display: none !important; }
-
-/* On mobile, simplify the bar */
-@media (max-width: 768px) {
-  .narr-bar-inner { padding: 6px 10px; gap: 6px; }
-  .narr-select { display: none; }
-  .narr-label { max-width: 120px; }
-  .narr-btn.narr-page { font-size: 11px; padding: 4px 8px; }
-}
 
 /* ============================================================
    Notepad (Feature 4)

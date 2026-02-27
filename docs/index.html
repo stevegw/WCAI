@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WCAI -- Windchill Config AI Wizard</title>
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 
@@ -22,6 +22,9 @@
         <h2>WCAI</h2>
         <p>Windchill Config AI</p>
       </div>
+      <button class="narr-toggle-btn" onclick="WCAI.speech.toggleCollapse()" title="Toggle narration" id="narr-toggle-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
       <button class="theme-toggle" onclick="WCAI.app.toggleTheme()" title="Toggle dark/light mode" id="theme-toggle-btn">&#9790;</button>
     </div>
     <button class="sb-collapse-btn" onclick="WCAI.app.toggleSidebar()" id="sb-collapse-btn">&#9776;</button>
@@ -76,7 +79,7 @@
 <script src="js/teams-validators.js?v=2"></script>
 <script src="js/teams-app.js?v=3"></script>
 <script src="js/reference-app.js?v=3"></script>
-<script src="js/speech.js?v=7"></script>
+<script src="js/speech.js?v=8"></script>
 <script src="js/notepad.js?v=2"></script>
 <script src="js/app.js?v=3"></script>
 

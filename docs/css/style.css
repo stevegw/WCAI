@@ -166,13 +166,13 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
    Layout
    ============================================================ */
 .app { display: flex; height: 100vh; }
-.sidebar { width: 260px; background: var(--c-bg-surface); border-right: 1px solid var(--c-border); padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; transition: width 0.25s ease; z-index: 100; }
+.sidebar { width: 260px; background: var(--c-bg-surface); border-right: 1px solid var(--c-border); padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0; overflow: hidden; transition: width 0.25s ease; z-index: 100; display: flex; flex-direction: column; }
 .main { flex: 1; margin-left: 260px; padding: 32px 40px; max-width: 900px; overflow-y: auto; height: 100vh; transition: margin-left 0.25s ease; }
 
 /* ============================================================
    Sidebar
    ============================================================ */
-.sb-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--c-border); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.sb-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--c-border); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .sb-logo h2 { font-size: 15px; font-weight: 700; color: var(--c-text-primary); }
 .sb-logo p { font-size: 11px; color: var(--c-text-dim); margin-top: 2px; }
 .sb-logo-text { flex: 1; }
@@ -189,12 +189,12 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 }
 
 /* Sidebar tab switcher */
-.sb-tabs { display: flex; gap: 4px; padding: 0 12px 12px; margin-bottom: 4px; }
+.sb-tabs { display: flex; gap: 4px; padding: 0 12px 12px; margin-bottom: 4px; flex-shrink: 0; }
 .sb-tab { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-dim); transition: all 0.15s; text-align: center; }
 .sb-tab:hover { border-color: var(--c-border-hover); color: var(--c-text-muted); }
 .sb-tab.active { background: var(--c-accent-010); border-color: var(--c-accent); color: var(--c-accent); }
 
-.sb-nav { list-style: none; }
+.sb-nav { list-style: none; flex: 1; overflow-y: auto; min-height: 0; }
 .sb-nav li { padding: 10px 20px; font-size: 13px; cursor: pointer; border-left: 3px solid transparent; color: var(--c-text-muted); transition: all 0.15s; display: flex; align-items: center; gap: 10px; }
 .sb-nav li:hover { background: var(--c-bg-surface-hover); color: var(--c-text); }
 .sb-nav li.active { background: var(--c-accent-006); color: var(--c-accent); border-left-color: var(--c-accent); font-weight: 600; }
@@ -202,13 +202,13 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .sb-nav li.active .num { background: var(--c-accent); color: var(--c-on-accent); }
 .sb-nav li.done .num { background: var(--c-accent-deep); color: var(--c-accent); }
 .sb-nav li .nav-label { overflow: hidden; white-space: nowrap; }
-.sb-status { padding: 16px 20px; margin-top: 12px; border-top: 1px solid var(--c-border); }
+.sb-status { padding: 16px 20px; margin-top: 12px; border-top: 1px solid var(--c-border); flex-shrink: 0; }
 .sb-status p { font-size: 11px; color: var(--c-text-dim); }
 .sb-status .bar { height: 4px; background: var(--c-border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
 .sb-status .fill { height: 100%; background: linear-gradient(90deg, var(--c-accent), var(--c-accent-hover)); border-radius: 2px; transition: width 0.3s; }
 
 /* Sidebar action buttons */
-.sb-actions { padding: 12px 20px; border-top: 1px solid var(--c-border); margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.sb-actions { padding: 12px 20px; border-top: 1px solid var(--c-border); margin-top: 8px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 .sb-actions button { width: 100%; padding: 7px 12px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid var(--c-border); background: var(--c-bg-surface); color: var(--c-text-muted); transition: all 0.15s; text-align: left; }
 .sb-actions button:hover { border-color: var(--c-border-hover); color: var(--c-text); background: var(--c-bg-surface-active); }
 .sb-actions .sb-upload-label { display: block; width: 100%; padding: 7px 12px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1px solid var(--c-border); background: var(--c-bg-surface); color: var(--c-text-muted); transition: all 0.15s; text-align: left; }

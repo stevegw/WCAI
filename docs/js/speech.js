@@ -422,12 +422,9 @@
 
     updateLabel(chunk.text);
 
-    // Small delay after cancel to avoid Chrome dropping the utterance
-    setTimeout(function () {
-      if (myId === narrationId && state === "playing") {
-        synth.speak(utt);
-      }
-    }, currentChunk === 0 ? 60 : 10);
+    // Speak synchronously to preserve Chrome's user-gesture context.
+    // The synchronous work between cancel() and here provides enough gap.
+    synth.speak(utt);
   }
 
   function stopNarration() {

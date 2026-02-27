@@ -362,7 +362,7 @@
   }
 
   function speakNextChunk() {
-    if (state === "stopped" || currentChunk >= chunks.length) {
+    if (collapsed || state === "stopped" || currentChunk >= chunks.length) {
       onDone();
       return;
     }
@@ -392,7 +392,7 @@
     };
 
     utt.onend = function () {
-      if (myId !== narrationId) return;
+      if (myId !== narrationId || collapsed) return;
       stopTimer();
 
       // Calibrate: measure actual duration
@@ -424,10 +424,14 @@
 
   function stopNarration() {
     narrationId++;
-    if (synth) synth.cancel();
+    state = "stopped";
     stopTimer();
     hideOverlay();
-    state = "stopped";
+    // Cancel speech -- call twice for stubborn mobile browsers
+    if (synth) {
+      synth.cancel();
+      synth.cancel();
+    }
     chunks = [];
     currentChunk = 0;
     textMap = [];

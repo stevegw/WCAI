@@ -520,6 +520,19 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .narr-bar.speaking { box-shadow: 0 -4px 16px rgba(0,0,0,0.2); }
 .narr-bar-inner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; max-width: 1200px; margin: 0 auto; }
 
+/* Toggle button */
+.narr-toggle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-dim); cursor: pointer; flex-shrink: 0; transition: all 0.15s; padding: 0; }
+.narr-toggle:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.narr-toggle svg { transition: transform 0.2s ease; }
+
+/* Collapsible content wrapper */
+.narr-content { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; transition: opacity 0.2s ease; }
+
+/* Collapsed state */
+.narr-bar.collapsed .narr-content { display: none; }
+.narr-bar.collapsed { background: var(--c-bg-surface); }
+.narr-bar.collapsed .narr-bar-inner { padding: 4px 16px; }
+
 /* Buttons inside bar */
 .narr-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--c-border); background: transparent; color: var(--c-text-muted); cursor: pointer; border-radius: 6px; transition: all 0.15s; padding: 6px 8px; font-size: 12px; white-space: nowrap; }
 .narr-btn:hover { border-color: var(--c-accent); color: var(--c-accent); background: var(--c-accent-004); }

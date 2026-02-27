@@ -58,6 +58,8 @@
   var bar = null;
   var sectionBtns = [];
   var clickHandler = null;
+  var collapsed = false;
+  var STORAGE_COLLAPSED = "wcai_narr_collapsed";
 
   /* ── Helpers ──────────────────────────────────────────────── */
   function isSupported() { return !!synth; }
@@ -456,13 +458,14 @@
 
   /* ── Public Playback Controls ─────────────────────────────── */
   function readPage() {
+    if (collapsed) return;
     var main = document.getElementById("main");
     if (!main) return;
     startNarration(main, 0);
   }
 
   function speakElement(el) {
-    if (!el) return;
+    if (collapsed || !el) return;
     startNarration(el, 0);
   }
 
@@ -499,6 +502,8 @@
     if (!main || !isSupported()) return;
 
     clickHandler = function (e) {
+      // Disabled when collapsed
+      if (collapsed) return;
       // Don't intercept clicks on buttons, links, inputs, selects
       var tag = e.target.tagName;
       if (tag === "BUTTON" || tag === "A" || tag === "INPUT" || tag === "SELECT" ||
@@ -572,12 +577,42 @@
     localStorage.setItem(STORAGE_RATE, rate);
   }
 
+  /* ── Collapse ─────────────────────────────────────────────── */
+  function toggleCollapse() {
+    collapsed = !collapsed;
+    localStorage.setItem(STORAGE_COLLAPSED, collapsed ? "1" : "0");
+
+    if (!bar) return;
+
+    if (collapsed) {
+      // Stop any active narration
+      stopNarration();
+      bar.classList.add("collapsed");
+      removeClickHandler();
+      // Reset cursor on main
+      var main = document.getElementById("main");
+      if (main) main.style.cursor = "";
+    } else {
+      bar.classList.remove("collapsed");
+      setupClickHandler();
+    }
+
+    // Flip the chevron icon
+    var icon = bar.querySelector("#narr-toggle-icon");
+    if (icon) {
+      icon.setAttribute("d", collapsed ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7");
+    }
+  }
+
   /* ── Control Bar ──────────────────────────────────────────── */
   function init() {
     if (!isSupported()) return;
 
     var savedRate = parseFloat(localStorage.getItem(STORAGE_RATE));
     if (savedRate && !isNaN(savedRate)) rate = savedRate;
+
+    // Restore collapsed state
+    collapsed = localStorage.getItem(STORAGE_COLLAPSED) === "1";
 
     loadVoices();
     if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
@@ -594,31 +629,43 @@
 
     bar.innerHTML =
       '<div class="narr-bar-inner">' +
-        '<button class="narr-btn narr-page" onclick="WCAI.speech.readPage()" title="Read entire page">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>' +
-          ' Read Page' +
+        // Toggle button -- always visible
+        '<button class="narr-toggle" id="narr-toggle" onclick="WCAI.speech.toggleCollapse()" title="Toggle narration bar">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path id="narr-toggle-icon" d="M19 9l-7 7-7-7"/></svg>' +
         '</button>' +
-        '<select class="narr-select" id="narr-voice" onchange="WCAI.speech.setVoice(this.value)" title="Voice"></select>' +
-        '<select class="narr-select narr-rate" id="narr-rate" onchange="WCAI.speech.setRate(this.value)" title="Speed">' +
-          rateOpts +
-        '</select>' +
-        '<div class="narr-playback">' +
-          '<div class="narr-divider"></div>' +
-          '<button class="narr-btn narr-play" id="narr-playpause" onclick="WCAI.speech.togglePlayPause()" title="Play / Pause">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path id="narr-play-icon" d="M8 5v14l11-7z"/></svg>' +
+        // Collapsible content
+        '<div class="narr-content" id="narr-content">' +
+          '<button class="narr-btn narr-page" onclick="WCAI.speech.readPage()" title="Read entire page">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>' +
+            ' Read Page' +
           '</button>' +
-          '<button class="narr-btn narr-stop" onclick="WCAI.speech.stop()" title="Stop">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>' +
-          '</button>' +
-          '<div class="narr-label" id="narr-label"></div>' +
+          '<select class="narr-select" id="narr-voice" onchange="WCAI.speech.setVoice(this.value)" title="Voice"></select>' +
+          '<select class="narr-select narr-rate" id="narr-rate" onchange="WCAI.speech.setRate(this.value)" title="Speed">' +
+            rateOpts +
+          '</select>' +
+          '<div class="narr-playback">' +
+            '<div class="narr-divider"></div>' +
+            '<button class="narr-btn narr-play" id="narr-playpause" onclick="WCAI.speech.togglePlayPause()" title="Play / Pause">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path id="narr-play-icon" d="M8 5v14l11-7z"/></svg>' +
+            '</button>' +
+            '<button class="narr-btn narr-stop" onclick="WCAI.speech.stop()" title="Stop">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>' +
+            '</button>' +
+            '<div class="narr-label" id="narr-label"></div>' +
+          '</div>' +
+          '<div class="narr-spacer"></div>' +
+          '<span class="narr-hint">Click any text to narrate from there</span>' +
         '</div>' +
-        '<div class="narr-spacer"></div>' +
-        '<span class="narr-hint">Click any text to narrate from there</span>' +
       '</div>';
 
     document.body.appendChild(bar);
+    if (collapsed) {
+      bar.classList.add("collapsed");
+      var icon = bar.querySelector("#narr-toggle-icon");
+      if (icon) icon.setAttribute("d", "M5 15l7-7 7 7");
+    }
     populateVoiceSelect();
-    setupClickHandler();
+    if (!collapsed) setupClickHandler();
   }
 
   /* ── Bar UI ───────────────────────────────────────────────── */
@@ -649,7 +696,7 @@
   /* ── Section Buttons ──────────────────────────────────────── */
   function injectSectionButtons() {
     removeSectionButtons();
-    if (!isSupported()) return;
+    if (!isSupported() || collapsed) return;
 
     var main = document.getElementById("main");
     if (!main) return;
@@ -706,6 +753,7 @@
     resume: resume,
     stop: stop,
     togglePlayPause: togglePlayPause,
+    toggleCollapse: toggleCollapse,
     setVoice: setVoice,
     setRate: setRate,
     injectSectionButtons: injectSectionButtons,

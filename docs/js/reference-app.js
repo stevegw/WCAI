@@ -14,8 +14,7 @@
   var STEPS_REFERENCE = [
     { id: "ref_access_model", label: "Access Model" },
     { id: "ref_access_control", label: "Access Control" },
-    { id: "ref_impl_planning", label: "Implementation Planning" },
-    { id: "ref_bulk_users", label: "Bulk User Loading" }
+    { id: "ref_impl_planning", label: "Implementation Planning" }
   ];
 
   var activeScenario = "new_user";
@@ -27,7 +26,6 @@
     if (stepIndex === 0) renderAccessModel();
     else if (stepIndex === 1) renderAccessControl();
     else if (stepIndex === 2) renderImplPlanning();
-    else if (stepIndex === 3) renderBulkUserLoading();
   }
 
   // ============================================================
@@ -1041,185 +1039,6 @@
       if (panels[j].getAttribute('data-pqpanel') === activePlanQ) panels[j].classList.add('active');
       else panels[j].classList.remove('active');
     }
-  }
-
-  // ============================================================
-  // PAGE 4: Bulk User Loading
-  // ============================================================
-  function renderBulkUserLoading() {
-    var html = '';
-    var cfg = WCAI.app._getConfig();
-    var people = (cfg && cfg.people) ? cfg.people : [];
-    var groups = (cfg && cfg.groups) ? cfg.groups : [];
-    var groupIndex = {};
-    for (var gi = 0; gi < groups.length; gi++) {
-      groupIndex[groups[gi].id] = groups[gi].name || groups[gi].id;
-    }
-
-    html += '<h1 class="sec-title">Bulk User Loading</h1>' +
-      '<p class="sec-desc">Load users and group assignments into Windchill dev VMs via CSV files and the LoadFromFile utility. This bypasses the UI for initial setup of test environments.</p>';
-
-    // --- Warning Callout ---
-    html += '<div style="background:var(--c-danger-008);border:1px solid var(--c-danger-030);border-radius:8px;padding:16px;margin-bottom:24px;">' +
-      '<div style="font-size:13px;font-weight:700;color:var(--c-danger);margin-bottom:6px;">Dev / Test VMs Only' + speechBtn('WCAI.speech.speakElement(this.parentElement)') + '</div>' +
-      '<div style="font-size:12px;color:var(--c-danger-light);line-height:1.7;">' +
-        'This process is intended for <strong>Windchill dev VMs with internal Apache DS</strong> (non-LDAP). ' +
-        'In production environments, users are managed through LDAP/Active Directory integration. ' +
-        'All loaded users receive the default password <code style="background:var(--c-danger-015);padding:2px 6px;border-radius:3px;font-size:11px;">Password1</code> -- change immediately after loading.' +
-      '</div>' +
-    '</div>';
-
-    // --- Three Concept Cards ---
-    html += '<div class="ref-concepts">' +
-      conceptCard(
-        'blue',
-        'Step 1: CSV Files',
-        'Two CSV files define users and their group memberships.',
-        '<p><strong>users.csv</strong> -- One row per user with username, full name, email, organization, and default password. ' +
-        'Uses the PTC <code>#User</code> header format.</p>' +
-        '<p><strong>user_groups.csv</strong> -- One row per user-group assignment. Maps each user to their Windchill internal group ' +
-        'using the PTC <code>#UserGroup</code> header format.</p>' +
-        '<p>Both files use comma-separated values with Windows line endings.</p>'
-      ) +
-      conceptCard(
-        'orange',
-        'Step 2: CSV2XML',
-        'Convert CSV files to Windchill-loadable XML format.',
-        '<p>Windchill\'s <code>LoadFromFile</code> utility requires XML input. The <code>CSV2XML</code> tool converts your CSV files:</p>' +
-        '<p style="font-family:monospace;font-size:11px;background:var(--c-ref-orange-005);padding:8px;border-radius:4px;margin:8px 0;">' +
-          'windchill wt.load.CSV2XML -d users.csv -o users.xml<br>' +
-          'windchill wt.load.CSV2XML -d user_groups.csv -o user_groups.xml' +
-        '</p>' +
-        '<p>Run these commands in the Windchill shell. The output XML files are created in the same directory.</p>'
-      ) +
-      conceptCard(
-        'green',
-        'Step 3: LoadFromFile',
-        'Import the XML files into your Windchill organization.',
-        '<p>Load users first, then group assignments (order matters):</p>' +
-        '<p style="font-family:monospace;font-size:11px;background:var(--c-accent-008);padding:8px;border-radius:4px;margin:8px 0;">' +
-          'windchill wt.load.LoadFromFile -d users.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg<br>' +
-          'windchill wt.load.LoadFromFile -d user_groups.xml -CONT_PATH /wt.inf.container.OrgContainer=YourOrg' +
-        '</p>' +
-        '<p>Users are created in the specified organization. Group assignments link them to existing groups.</p>'
-      ) +
-    '</div>';
-
-    // --- CSV Format Reference ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">CSV Format Reference</h2>';
-    html += '<table class="ref-cheat-table">' +
-      '<thead><tr>' +
-        '<th>File</th>' +
-        '<th>Header Row</th>' +
-        '<th>Row Format</th>' +
-        '<th>Notes</th>' +
-      '</tr></thead>' +
-      '<tbody>' +
-        '<tr>' +
-          '<td><strong>users.csv</strong></td>' +
-          '<td style="font-family:monospace;font-size:10px;">#User,user,newUser,webServerID,fullName,LastName,Locale,Email,...,Organization,...,ignore,password</td>' +
-          '<td>One row per user</td>' +
-          '<td>webServerID = login username; password defaults to Password1</td>' +
-        '</tr>' +
-        '<tr>' +
-          '<td><strong>user_groups.csv</strong></td>' +
-          '<td style="font-family:monospace;font-size:10px;">#UserGroup,user,groupName,userName</td>' +
-          '<td>One row per user-group pair</td>' +
-          '<td>Groups must already exist in Windchill; groupName is the display name</td>' +
-        '</tr>' +
-      '</tbody>' +
-    '</table>';
-
-    // --- Complete Workflow ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Complete Workflow' + speechBtn('WCAI.speech.speakElement(this.nextElementSibling || this)') + '</h2>';
-    html += '<div class="ref-scenario-steps">' +
-      scenarioStep(1, 'blue', '<strong>Prepare CSV files</strong> -- Generate users.csv and user_groups.csv from the wizard (download below) or create them manually following the PTC header format.') +
-      scenarioStep(2, 'blue', '<strong>Create groups first</strong> -- Groups <em>cannot</em> be loaded via CSV. Create all groups manually in Windchill: [Org] &rarr; Utilities &rarr; Participant Administration &rarr; Internal Groups &rarr; Create.') +
-      scenarioStep(3, 'orange', '<strong>Convert CSV to XML</strong> -- Run <code>windchill wt.load.CSV2XML</code> for each CSV file. This produces the XML format that LoadFromFile expects.') +
-      scenarioStep(4, 'green', '<strong>Load users</strong> -- Run <code>windchill wt.load.LoadFromFile</code> on users.xml first. Users must exist before they can be assigned to groups.') +
-      scenarioStep(5, 'green', '<strong>Load group assignments</strong> -- Run <code>windchill wt.load.LoadFromFile</code> on user_groups.xml. This adds each user to their designated group.') +
-      scenarioStep(6, 'purple', '<strong>Post-load steps</strong> -- Change default passwords, assign users to license groups (Site &rarr; License Management), and verify group membership in Participant Administration.') +
-    '</div>';
-
-    // --- Common Mistakes ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Common Mistakes</h2>';
-    html += '<div class="ref-mistakes-grid">' +
-      misconceptionCard(
-        '"Groups are auto-created when loading user_groups.csv"',
-        'Groups <strong>cannot</strong> be created via LoadFromFile or CSV2XML. They must be created manually in the Windchill UI before loading group assignments. If a group referenced in user_groups.csv does not exist, the assignment silently fails.',
-        'Always create groups manually first, then load group assignments.'
-      ) +
-      misconceptionCard(
-        '"This replaces LDAP for production"',
-        'Bulk CSV loading is for <strong>dev/test VMs only</strong> that use Windchill\'s internal Apache DS directory. Production environments should use LDAP or Active Directory integration for user management, which provides SSO, password policy enforcement, and automatic provisioning.',
-        'CSV loading = dev VMs only. Production = LDAP/AD.'
-      ) +
-      misconceptionCard(
-        '"Users can log in immediately after loading"',
-        'Loaded users have accounts but <strong>no license group membership</strong>. Without a license assignment (PTC Author, PTC PDMLink, etc.), users cannot access Windchill. License assignment is a separate manual step: Site &rarr; Utilities &rarr; License Management.',
-        'Load users, then assign to license groups, then they can log in.'
-      ) +
-      misconceptionCard(
-        '"The default password is permanent"',
-        'All CSV-loaded users get the password <strong>Password1</strong>. This is a temporary default for initial setup only. Administrators should force a password change on first login or manually update passwords immediately after loading.',
-        'Change all default passwords immediately after loading.'
-      ) +
-    '</div>';
-
-    // --- Download Section ---
-    html += '<h2 style="font-size:16px;font-weight:700;color:var(--c-text);margin:32px 0 16px 0;">Download Bulk User Files</h2>';
-
-    if (people.length > 0) {
-      // Preview table
-      html += '<div style="background:var(--c-bg-surface);border:1px solid var(--c-border);border-radius:8px;padding:16px;margin-bottom:16px;">' +
-        '<div style="font-size:13px;font-weight:600;color:var(--c-text);margin-bottom:12px;">' + people.length + ' user' + (people.length !== 1 ? 's' : '') + ' defined in your config</div>' +
-        '<table class="ref-cheat-table" style="margin:0;">' +
-          '<thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Group</th></tr></thead>' +
-          '<tbody>';
-      for (var pi = 0; pi < people.length; pi++) {
-        var p = people[pi];
-        var uname = p.username || p.id;
-        var fname = p.name || uname;
-        var email = p.email || (uname + '@example.com');
-        var gname = p.group ? (groupIndex[p.group] || p.group) : '<span style="color:var(--c-text-dim);">none</span>';
-        html += '<tr>' +
-          '<td style="font-family:monospace;font-size:11px;">' + uname + '</td>' +
-          '<td>' + fname + '</td>' +
-          '<td style="font-size:11px;">' + email + '</td>' +
-          '<td>' + gname + '</td>' +
-        '</tr>';
-      }
-      html += '</tbody></table></div>';
-
-      // Download button
-      html += '<div style="text-align:center;margin-bottom:24px;">' +
-        '<button onclick="WCAI.app.downloadBulkUserZip()" style="padding:12px 32px;font-size:14px;font-weight:700;color:#fff;background:var(--c-accent);border:none;border-radius:8px;cursor:pointer;">' +
-          'Download Bulk User ZIP' +
-        '</button>' +
-        '<div style="font-size:11px;color:var(--c-text-dim);margin-top:8px;">Contains users.csv, user_groups.csv, and load_users.bat</div>' +
-      '</div>';
-    } else {
-      html += '<div style="background:var(--c-warning-008);border:1px solid var(--c-warning-020);border-radius:8px;padding:16px;margin-bottom:24px;">' +
-        '<div style="font-size:13px;font-weight:600;color:var(--c-warning-vivid);margin-bottom:4px;">No people defined yet</div>' +
-        '<div style="font-size:12px;color:var(--c-warning-lighter);line-height:1.6;">' +
-          'Add people in the <strong>Change Management</strong> wizard (Step 3: People) or load the example config, then return here to download bulk user files.' +
-        '</div>' +
-      '</div>';
-    }
-
-    // --- Insight callout ---
-    html += '<div class="ref-insight">' +
-      '<div style="font-size:13px;font-weight:700;color:var(--c-info-light);margin-bottom:6px;">One-Time Setup Convenience</div>' +
-      '<div style="font-size:12px;color:var(--c-text-muted);line-height:1.7;">' +
-        'Bulk user loading is a one-time convenience for standing up dev/test environments. Once your VM is configured, manage users through the Windchill UI or connect LDAP for ongoing user administration. ' +
-        'The generated batch script includes <code>--dry-run</code> support so you can preview commands before executing them.' +
-      '</div>' +
-    '</div>';
-
-    // Nav buttons
-    html += renderNavButtons();
-
-    document.getElementById("main").innerHTML = html;
   }
 
   // ============================================================

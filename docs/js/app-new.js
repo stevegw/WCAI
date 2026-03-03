@@ -474,7 +474,7 @@
     org: {
       name: "AcmeOrg",
       domain: "wchill.com",
-      admins: ["dawn"],
+      admins: ["orgadmin"],
     },
     directory: {
       type: "windchill",
@@ -482,19 +482,12 @@
       notes: "",
     },
     licenses: {
+      // Admin -- org and change administration: PTC PDMLink
+      orgadmin: "ptc_pdmlink", chgadmin1: "ptc_pdmlink", chgadmin2: "ptc_pdmlink",
       // Engineering -- create parts and documents: PTC Author
-      tony: "ptc_author", eric: "ptc_author", melissa: "ptc_author", matt: "ptc_author",
-      heinz: "ptc_author", alan: "ptc_author", dave: "ptc_author", kevin: "ptc_author",
-      dennis: "ptc_author", vivian: "ptc_author", will: "ptc_author", doug: "ptc_author",
-      pam: "ptc_author", scott: "ptc_author",
-      // Manufacturing -- create and modify manufacturing docs: PTC Author
-      chris: "ptc_author", mike: "ptc_author", sam: "ptc_author",
+      engineer1: "ptc_author", engineer2: "ptc_author",
       // Quality -- review and workflow participation: PTC PDMLink
-      quinn: "ptc_pdmlink", robert: "ptc_pdmlink", brian: "ptc_pdmlink", rita: "ptc_pdmlink",
-      // Management -- approval and oversight: PTC PDMLink
-      pat: "ptc_pdmlink", phil: "ptc_pdmlink", don: "ptc_pdmlink", mark: "ptc_pdmlink",
-      peter: "ptc_pdmlink", ryan: "ptc_pdmlink", lucy: "ptc_author", dawn: "ptc_pdmlink",
-      james: "ptc_pdmlink", singham: "ptc_pdmlink", paul: "ptc_pdmlink",
+      qa1: "ptc_pdmlink", qa2: "ptc_pdmlink",
     },
     context_roles: {
       guest: [],
